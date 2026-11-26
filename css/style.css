@@ -189,3 +189,6 @@ select { background: var(--card); border: 1px solid var(--line); border-radius: 
 @media (prefers-reduced-motion: no-preference) {
   .cell, .chip, .tabs button { transition: background-color .15s, color .15s; }
 }
+
+.cell.salih::after { content: "✓"; position: absolute; top: 2px; inset-inline-start: 4px; font-size: 10px; font-weight: 700; color: var(--green); line-height: 1; }
+.cell.today.salih::after { color: #fff; }

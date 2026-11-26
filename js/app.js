@@ -89,6 +89,14 @@
   }
 
   /* ---------- المناسبات ---------- */
+  // اليوم الصالح حسب تقويم الحوزة (يمتد من ليلة اليوم حتى نهايته)
+  function isSalih(h) {
+    if (st.source !== 'hawza') return false;
+    const a = CD.SALIH[h.y + '-' + h.m];
+    return !!a && a.indexOf(h.d) >= 0;
+  }
+  const SALIH_TXT = 'من الأيام الصالحة حسب تقويم الحوزة (تمتد من ليلة اليوم حتى نهايته)';
+
   function eventsOnJdn(jdn) {
     const h = hj.fromJdn(jdn);
     return E.on(h.m, h.d, hj.monthLength(h.y, h.m));
@@ -125,6 +133,7 @@
     if (wd === 4) out.push('مساء اليوم ليلة الجمعة: دعاء كميل وزيارة الإمام الحسين (ع)');
     if (wd === 5) out.push('يوم الجمعة: دعاء الندبة والإكثار من الصلاة على محمد وآل محمد');
     if ((h.d === 13 || h.d === 14 || h.d === 15) && h.m !== 9 && h.m !== 12) out.push('من الأيام البيض: يُستحب صيامها');
+    if (isSalih(h)) out.push(SALIH_TXT);
     if (h.m === 7 || h.m === 8) out.push('شهر ' + (h.m === 7 ? 'رجب' : 'شعبان') + ': يُستحب الاستغفار وكثرة الدعاء والصيام');
     if (h.m === 1 && h.d <= 10) out.push('عشرة محرم: أيام عزاء الإمام الحسين (ع)');
     return out;
@@ -226,7 +235,7 @@
       const wd = H.weekday(j);
       const g = gregOf(j);
       const types = evs.map(function (e) { return e.type; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
-      cells += '<button class="cell' + (j === t.jdn ? ' today' : '') + (j === selJdn ? ' sel' : '') + (wd === 5 ? ' fri' : '') + '" data-a="pick" data-j="' + j + '" aria-label="' + ar(d) + ' ' + H.HIJRI_MONTHS[m - 1] + '">' +
+      cells += '<button class="cell' + (j === t.jdn ? ' today' : '') + (j === selJdn ? ' sel' : '') + (wd === 5 ? ' fri' : '') + (isSalih({ y: y, m: m, d: d }) ? ' salih' : '') + '" data-a="pick" data-j="' + j + '" aria-label="' + ar(d) + ' ' + H.HIJRI_MONTHS[m - 1] + (isSalih({ y: y, m: m, d: d }) ? ' — يوم صالح' : '') + '">' +
         '<span class="h">' + ar(d) + '</span><span class="g">' + ar(g.d) + '</span>' +
         '<span class="dots">' + types.map(function (ty) { return '<i class="t-' + ty + '"></i>'; }).join('') + '</span></button>';
     }
@@ -254,13 +263,14 @@
       html += '<div class="warn">بداية هذا الشهر تقديرية (حساب) إلى أن تُعلن الرؤية. بعد الإعلان اضغط «ضبط بداية الشهر».</div>';
     }
     html += '<div class="grid">' + days.map(function (n, i) { return '<div class="dow' + (i === 6 ? ' fri' : '') + '">' + n + '</div>'; }).join('') + cells + '</div>' +
-      '<div class="legend"><span class="t-joy"><i></i>فرح</span><span class="t-grief"><i></i>حزن</span><span class="t-eid"><i></i>عيد</span><span class="t-ibadah"><i></i>عبادات</span><span class="t-month"><i></i>غرة شهر</span></div>';
+      '<div class="legend"><span class="t-joy"><i></i>فرح</span><span class="t-grief"><i></i>حزن</span><span class="t-eid"><i></i>عيد</span><span class="t-ibadah"><i></i>عبادات</span><span class="t-month"><i></i>غرة شهر</span>' + (st.source === 'hawza' ? '<span><b style="color:var(--green)">✓</b> يوم صالح</span>' : '') + '</div>';
 
     // تفاصيل اليوم المختار
     const sh = hj.fromJdn(selJdn);
     const sev = E.on(sh.m, sh.d, len);
     const tm = dayTimes(selJdn);
     html += '<section class="card detail"><h3>' + H.WEEKDAYS[H.weekday(selJdn)] + ' ' + fmtH(sh) + '</h3><div class="sub">' + fmtG(selJdn) + '</div>' +
+      (isSalih(sh) ? '<div class="hint" style="margin:6px 0"><b style="color:var(--green)">✓</b> ' + SALIH_TXT + '</div>' : '') +
       (sev.length ? sev.map(function (ev) {
         return evRow({ jdn: selJdn, h: sh, ev: ev }, null);
       }).join('') : '<div class="hint" style="margin:6px 0">لا توجد مناسبة مسجّلة في هذا اليوم.</div>') +

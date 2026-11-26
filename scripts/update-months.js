@@ -61,30 +61,74 @@ function resolveDate(first, hy, hm) {
   return found[0];
 }
 
-// نستخدم curl لأنه يحترم إعدادات الوكيل (proxy) في كل البيئات
+/** يستخرج أرقام الأيام الهجرية الصالحة (عمود ✓) من ناتج pdftotext -bbox بالاعتماد على الإحداثيات. */
+function parseSalih(bbox) {
+  const pw = +((bbox.match(/<page width="([\d.]+)"/) || [])[1] || 0);
+  if (!pw) throw new Error('لا يوجد عرض صفحة');
+  const words = [];
+  const re = /<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">(.*?)<\/word>/g;
+  let m;
+  while ((m = re.exec(bbox))) words.push({ x: +m[1], y: (+m[2] + +m[4]) / 2, t: norm(m[5]) });
+  // أرقام الأيام الهجرية: عمود أقصى اليمين
+  const rows = {};
+  words.forEach(function (w) {
+    if (w.x >= pw * 0.88 && /^\d{1,2}$/.test(w.t) && +w.t >= 1 && +w.t <= 30) rows[+w.t] = w.y;
+  });
+  const have = Object.keys(rows).map(Number);
+  for (let d = 1; d <= 29; d++) if (rows[d] == null) throw new Error('لم أجد رقم اليوم ' + d);
+  // علامات ✓: رموز خاصة (Private Use) تقع على صف يوم، ونأخذ العمود الأكثر تكراراً
+  const hits = [];
+  words.forEach(function (w) {
+    if (!/^[\uE000-\uF8FF]+$/.test(w.t) || w.x < pw * 0.7 || w.x > pw * 0.88) return;
+    let best = null;
+    have.forEach(function (d) { if (Math.abs(rows[d] - w.y) < 6 && (!best || Math.abs(rows[d] - w.y) < Math.abs(rows[best] - w.y))) best = d; });
+    if (best) hits.push({ d: best, x: Math.round(w.x) });
+  });
+  const cnt = {};
+  hits.forEach(function (h) { cnt[h.x] = (cnt[h.x] || 0) + 1; });
+  const col = Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; })[0];
+  if (col == null) throw new Error('لم أجد عمود العلامات');
+  const out = hits.filter(function (h) { return String(h.x) === col; }).map(function (h) { return h.d; })
+    .filter(function (v, i, arr) { return arr.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+  // الشهر العادي فيه ١٣–١٧ يوماً صالحاً؛ أقل من ٨ يعني أن تصميم الجدول مختلف والقراءة غير موثوقة
+  if (out.length < 8) throw new Error('عدد الأيام الصالحة غير معقول (' + out.length + ')');
+  return out;
+}
+
+// نستخدم curl لأنه يحترم إعدادات الوكيل (proxy) في كل البيئات. يرجع مسار الملف أو null إذا لم يُنشر.
 function fetchPdf(file) {
   const tmp = path.join(require('os').tmpdir(), 'hawza-' + file + '.pdf');
   const code = execFileSync('curl', ['-sSL', '-m', '60', '-o', tmp, '-w', '%{http_code}', BASE + file + '.pdf'], { encoding: 'utf8' }).trim();
-  if (code === '404') return Promise.resolve(null);
-  if (code !== '200') return Promise.reject(new Error('HTTP ' + code + ' ' + file));
-  return Promise.resolve(execFileSync('pdftotext', ['-raw', tmp, '-'], { encoding: 'utf8' }));
+  if (code === '404') return null;
+  if (code !== '200') throw new Error('HTTP ' + code + ' ' + file);
+  return tmp;
 }
+const pdfText = function (f) { return execFileSync('pdftotext', ['-raw', f, '-'], { encoding: 'utf8' }); };
+const pdfBbox = function (f) { return execFileSync('pdftotext', ['-bbox', f, '-'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }); };
 
-function currentData() { delete require.cache[require.resolve(DATA)]; return require(DATA).HAWZA; }
+function currentData() { delete require.cache[require.resolve(DATA)]; return require(DATA); }
 
-function writeData(table) {
-  const keys = Object.keys(table).sort(function (a, b) {
+function sortKeys(obj) {
+  return Object.keys(obj).sort(function (a, b) {
     const x = a.split('-').map(Number), y = b.split('-').map(Number);
     return x[0] - y[0] || x[1] - y[1];
   });
+}
+
+function writeData(table, salih) {
+  const keys = sortKeys(table);
   const rows = keys.map(function (k, i) {
-    const m = +k.split('-')[1], d = table[k];
-    return "    '" + k + "': [" + d.join(', ') + ']' + (i < keys.length - 1 ? ',' : ' ') + ' // ' + MONTHS_AR[m - 1];
+    const m = +k.split('-')[1];
+    return "    '" + k + "': [" + table[k].join(', ') + ']' + (i < keys.length - 1 ? ',' : ' ') + ' // ' + MONTHS_AR[m - 1];
   });
-  const block = '  // BEGIN-AUTO\n  const HAWZA = {\n' + rows.join('\n') + '\n  };\n  // END-AUTO';
-  const src = fs.readFileSync(DATA, 'utf8');
-  const out = src.replace(/ {2}\/\/ BEGIN-AUTO[\s\S]*?\/\/ END-AUTO/, block);
-  fs.writeFileSync(DATA, out);
+  const sk = sortKeys(salih);
+  const srows = sk.map(function (k, i) {
+    return "    '" + k + "': [" + salih[k].join(', ') + ']' + (i < sk.length - 1 ? ',' : '');
+  });
+  let src = fs.readFileSync(DATA, 'utf8');
+  src = src.replace(/ {2}\/\/ BEGIN-AUTO[\s\S]*?\/\/ END-AUTO/, '  // BEGIN-AUTO\n  const HAWZA = {\n' + rows.join('\n') + '\n  };\n  // END-AUTO');
+  src = src.replace(/ {2}\/\/ BEGIN-SALIH[\s\S]*?\/\/ END-SALIH/, '  // BEGIN-SALIH\n  const SALIH = {\n' + srows.join('\n') + '\n  };\n  // END-SALIH');
+  fs.writeFileSync(DATA, src);
 }
 
 function bumpCache() {
@@ -93,30 +137,46 @@ function bumpCache() {
 }
 
 async function main() {
-  const table = Object.assign({}, currentData());
-  // نفحص من آخر شهر معروف وحتى ثلاثة شهور بعده (الشهر الأخير نعيد التحقق منه أيضاً)
-  const keys = Object.keys(table).map(function (k) { return k.split('-').map(Number); })
-    .sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+  const cur = currentData();
+  const table = Object.assign({}, cur.HAWZA);
+  const salih = Object.assign({}, cur.SALIH);
+  const keys = sortKeys(table).map(function (k) { return k.split('-').map(Number); });
   let [y, m] = keys[keys.length - 1];
+  const last = y + '-' + m;
+  // آخر شهر معروف + ثلاثة شهور بعده + أي شهر معروف ينقصه عمود الأيام الصالحة
   const todo = [[y, m]];
   for (let i = 0; i < 3; i++) { const n = H.nextYM(y, m); y = n[0]; m = n[1]; todo.push([y, m]); }
+  keys.forEach(function (k) { if (!salih[k.join('-')] && !todo.some(function (t) { return t[0] === k[0] && t[1] === k[1]; })) todo.push(k); });
 
-  let changed = false;
+  let changed = false, hardFail = false;
   for (const [hy, hm] of todo) {
-    const file = String(hy) + String(hm).padStart(2, '0');
-    const text = await fetchPdf(file);
-    if (!text) { console.log(file + ': لم يُنشر بعد'); continue; }
-    const date = resolveDate(parseFirstDay(text), hy, hm);
-    const key = hy + '-' + hm;
-    const old = table[key];
-    if (!old || old.join() !== date.join()) {
-      console.log(key + ' (' + MONTHS_AR[hm - 1] + '): ' + (old ? old.join('-') + ' ← ' : 'جديد ') + date.join('-'));
-      table[key] = date; changed = true;
-    } else console.log(key + ': بلا تغيير (' + date.join('-') + ')');
+    const key = hy + '-' + hm, file = String(hy) + String(hm).padStart(2, '0');
+    const critical = !table[key] || key === last;   // الشهور القديمة: الأخطاء تحذير فقط
+    const pdf = fetchPdf(file);
+    if (!pdf) { console.log(key + ': لم يُنشر بعد'); continue; }
+    try {
+      const date = resolveDate(parseFirstDay(pdfText(pdf)), hy, hm);
+      const old = table[key];
+      if (!old || old.join() !== date.join()) {
+        console.log(key + ' (' + MONTHS_AR[hm - 1] + '): ' + (old ? old.join('-') + ' ← ' : 'جديد ') + date.join('-'));
+        table[key] = date; changed = true;
+      } else console.log(key + ': بداية الشهر بلا تغيير (' + date.join('-') + ')');
+    } catch (e) {
+      console.error(key + ': ' + (critical ? 'خطأ' : 'تحذير') + ' في قراءة بداية الشهر: ' + e.message);
+      if (critical) hardFail = true;
+    }
+    try {
+      const days = parseSalih(pdfBbox(pdf));
+      if (!salih[key] || salih[key].join() !== days.join()) {
+        console.log(key + ': الأيام الصالحة = ' + days.join(' '));
+        salih[key] = days; changed = true;
+      }
+    } catch (e) { console.error(key + ': تحذير في قراءة الأيام الصالحة: ' + e.message); }
   }
-  if (changed && !DRY) { writeData(table); bumpCache(); console.log('تم تحديث js/calendar-data.js ورفع نسخة الكاش'); }
+  if (changed && !DRY) { writeData(table, salih); bumpCache(); console.log('تم تحديث js/calendar-data.js ورفع نسخة الكاش'); }
   if (!changed) console.log('لا جديد.');
+  if (hardFail) process.exit(1);
 }
 
 if (require.main === module) main().catch(function (e) { console.error('فشل: ' + e.message); process.exit(1); });
-module.exports = { parseFirstDay, resolveDate, weekdayOf };
+module.exports = { parseFirstDay, resolveDate, weekdayOf, parseSalih };

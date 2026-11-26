@@ -107,4 +107,19 @@ assert.deepStrictEqual(U.resolveDate({ d: 12, wd: 4 }, 1448, 6), [2026, 11, 12])
 assert.deepStrictEqual(U.resolveDate({ d: 16, wd: 4 }, 1448, 2), [2026, 7, 16]);          // يخالف الحساب العام بيوم
 assert.throws(() => U.resolveDate({ d: 20, wd: 4 }, 1448, 6));                            // تاريخ بعيد → يرفض
 
+// قراءة عمود الأيام الصالحة من إحداثيات النص (بيانات اصطناعية بنفس شكل pdftotext -bbox)
+const mk = (x, y, t) => `<word xMin="${x}" yMin="${y}" xMax="${x + 9}" yMax="${y + 12}">${t}</word>`;
+let bb = '<page width="595" height="842">';
+for (let d = 1; d <= 30; d++) {
+  bb += mk(552, 100 + d * 20, String(d));
+  if (d % 3 !== 0) bb += mk(476, 100 + d * 20, '\uf050');            // ✓ في العمود
+}
+bb += mk(108, 120, '\uf06a') + '</page>';                           // زخرفة خارج العمود
+const sal = U.parseSalih(bb);
+assert.strictEqual(sal.length, 20);
+assert(!sal.includes(3) && sal.includes(1) && sal.includes(29));
+assert.throws(() => U.parseSalih('<page width="595" height="842"></page>'));   // لا أرقام أيام → يرفض
+// البيانات المخزنة معقولة
+Object.keys(CD.SALIH).forEach(k => assert(CD.SALIH[k].length >= 8 && CD.SALIH[k].every(d => d >= 1 && d <= 30)));
+
 console.log('كل الاختبارات نجحت ✔');
