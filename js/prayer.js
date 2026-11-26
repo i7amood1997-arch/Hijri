@@ -1,6 +1,7 @@
 /* حساب مواقيت الصلاة على المذهب الجعفري.
  *  الفجر: 16°  |  المغرب: 4° (ذهاب الحمرة المشرقية)  |  العشاء: 14°
- *  منتصف الليل الشرعي: منتصف المدة بين الغروب وفجر اليوم التالي.
+ *  منتصف الليل الشرعي: بين الغروب وفجر اليوم التالي (أو شروقه حسب opts.midnight).
+ *  opts: { fajr: زاوية الفجر، midnight: 'fajr' | 'sunrise' }
  * الخوارزمية: موضع الشمس المبسّط (نفس أسلوب PrayTimes).
  * كل الأوقات تُرجع كساعات عشرية بالتوقيت المحلي للموقع.
  */
@@ -58,11 +59,12 @@
    * loc: { lat, lng, tz }
    * adj: تعديل بالدقائق لكل وقت (اختياري)
    */
-  function times(jdn, loc, adj) {
-    const p = JAFARI;
+  function times(jdn, loc, adj, opts) {
+    const p = { fajr: (opts && opts.fajr) || JAFARI.fajr, maghrib: JAFARI.maghrib, isha: JAFARI.isha };
+    const toSunrise = !!(opts && opts.midnight === 'sunrise');
     const today = rawTimes(jdn, loc.lat, loc.lng, loc.tz, p);
     const next = rawTimes(jdn + 1, loc.lat, loc.lng, loc.tz, p);
-    const night = fixH(next.fajr - today.sunset);
+    const night = fixH((toSunrise ? next.sunrise : next.fajr) - today.sunset);
     today.midnight = today.sunset + night / 2;
     today.nextFajr = next.fajr + 24;
     if (adj) {

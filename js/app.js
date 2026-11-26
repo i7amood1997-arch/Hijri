@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const H = window.Hijri, P = window.Prayer, E = window.Occasions;
+  const H = window.Hijri, P = window.Prayer, E = window.Occasions, CD = window.CalendarData;
 
   /* ---------- أدوات ---------- */
   const AR = '٠١٢٣٤٥٦٧٨٩';
@@ -33,7 +33,7 @@
   const KEY = 'hadi.settings.v1';
   const DEFAULTS = {
     cityId: 'manama', name: 'المنامة', lat: 26.2285, lng: 50.5860, tz: 3,
-    offset: 0, overrides: {}, adj: {}
+    source: 'hawza', offset: 0, overrides: {}, adj: {}
   };
   function load() {
     try {
@@ -44,8 +44,13 @@
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* ignore */ } }
 
   let st = load();
-  let hj = H.create(st);
-  function rebuild() { hj = H.create(st); save(); }
+  function buildCal() {
+    const base = st.source === 'hawza' ? CD.toJdnMap(CD.HAWZA, H.gregToJdn) : {};
+    return H.create({ offset: st.offset, overrides: Object.assign({}, base, st.overrides) });
+  }
+  let hj = buildCal();
+  function rebuild() { hj = buildCal(); save(); }
+  function prayerOpts() { return CD.PRAYER_PROFILES[st.source] || CD.PRAYER_PROFILES.general; }
 
   /* ---------- الوقت (بتوقيت الموقع المختار) ---------- */
   function now() {
@@ -55,7 +60,7 @@
       sec: d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds()
     };
   }
-  function dayTimes(jdn) { return P.times(jdn, st, st.adj); }
+  function dayTimes(jdn) { return P.times(jdn, st, st.adj, prayerOpts()); }
 
   function clock(h) {
     if (h == null || isNaN(h)) return '—';
@@ -162,7 +167,9 @@
       PRAYERS.map(function (p) {
         return '<li data-k="' + p.k + '" class="' + (p.main ? '' : 'sub') + '"><span class="n">' + p.n + '</span><span class="t">' + clock(times[p.k]) + '</span></li>';
       }).join('') +
-      '</ul><div class="note">حسب المذهب الجعفري: الفجر ١٦°، والمغرب بعد ذهاب الحمرة المشرقية (٤°). ' + st.name + '</div></section>';
+      '</ul><div class="note">' + (st.source === 'hawza'
+        ? 'على تقويم حوزة الهدى (البحرين): منتصف الليل بين الغروب والشروق، ويُحتاط ٣ دقائق بعد وقت الفجر. '
+        : 'حسب المذهب الجعفري: الفجر ١٦°، والمغرب بعد ذهاب الحمرة المشرقية (٤°). ') + st.name + '</div></section>';
 
     html += '<section class="card"><h2>المناسبات القادمة <button class="link" data-a="nav" data-v="occ">عرض الكل</button></h2>' +
       (ups.length ? ups.map(function (i) { return evRow(i, t.jdn); }).join('') : '<div class="empty">لا مناسبات قريبة</div>') +
@@ -236,12 +243,16 @@
 
     if (showAdjust) {
       const isOv = st.overrides[y + '-' + m] != null;
-      html += '<div class="card"><div class="row" style="padding-top:0"><div><b>أول ' + H.HIJRI_MONTHS[m - 1] + '</b><div class="d">' + fmtG(start, true) + (isOv ? ' · معدّل يدوياً' : '') + '</div></div>' +
+      const fromSrc = !isOv && st.source === 'hawza' && CD.HAWZA[y + '-' + m] != null;
+      html += '<div class="card"><div class="row" style="padding-top:0"><div><b>أول ' + H.HIJRI_MONTHS[m - 1] + '</b><div class="d">' + fmtG(start, true) + (isOv ? ' · معدّل يدوياً' : fromSrc ? ' · من تقويم الحوزة' : '') + '</div></div>' +
         '<div class="step"><button data-a="ms" data-d="-1" aria-label="يوم قبل">−</button><span>١ يوم</span><button data-a="ms" data-d="1" aria-label="يوم بعد">+</button></div></div>' +
         '<div class="hint">يبدأ الشهر عند الشيعة بالرؤية. اضبط اليوم حسب إعلان إدارة الأوقاف الجعفرية في البحرين أو مرجعك. تغيير بداية شهر يغيّر طول الشهر السابق له تلقائياً.</div>' +
         (isOv ? '<div class="btns"><button class="btn ghost" data-a="msreset">إعادة للحساب الافتراضي</button></div>' : '') + '</div>';
     }
 
+    if (st.source === 'hawza' && CD.HAWZA[y + '-' + m] == null && st.overrides[y + '-' + m] == null) {
+      html += '<div class="warn">بداية هذا الشهر تقديرية (حساب) إلى أن تُعلن الرؤية. بعد الإعلان اضغط «ضبط بداية الشهر».</div>';
+    }
     html += '<div class="grid">' + days.map(function (n, i) { return '<div class="dow' + (i === 6 ? ' fri' : '') + '">' + n + '</div>'; }).join('') + cells + '</div>' +
       '<div class="legend"><span class="t-joy"><i></i>فرح</span><span class="t-grief"><i></i>حزن</span><span class="t-eid"><i></i>عيد</span><span class="t-ibadah"><i></i>عبادات</span><span class="t-month"><i></i>غرة شهر</span></div>';
 
@@ -285,7 +296,13 @@
     return '<div class="step"><button data-a="adj" data-k="' + key + '" data-d="-1" aria-label="إنقاص">−</button><span>' + (val > 0 ? '+' : '') + ar(val) + '</span><button data-a="adj" data-k="' + key + '" data-d="1" aria-label="زيادة">+</button></div>';
   }
   function setHtml() {
-    let html = '<section class="card"><h2>الموقع</h2><div class="row"><span>المدينة</span><select data-a="city" aria-label="المدينة">' +
+    let html = '<section class="card"><h2>المرجع المعتمد</h2><div class="row"><span>التقويم والمواقيت</span><select data-a="source" aria-label="المرجع">' +
+      '<option value="hawza"' + (st.source === 'hawza' ? ' selected' : '') + '>حوزة الهدى (البحرين)</option>' +
+      '<option value="general"' + (st.source === 'general' ? ' selected' : '') + '>حساب عام (جعفري)</option></select></div>' +
+      '<div class="hint">' + (st.source === 'hawza'
+        ? 'بدايات الشهور مأخوذة من تقويم الحوزة المعلن حتى جمادى الآخرة ١٤٤٨، وما بعدها تقديري. الفجر ١٦٫٥° ومنتصف الليل للشروق، حسب جداولهم.'
+        : 'تقويم حسابي والفجر ١٦° ومنتصف الليل للفجر. اضبط بداية الشهور بنفسك.') + '</div></section>' +
+      '<section class="card"><h2>الموقع</h2><div class="row"><span>المدينة</span><select data-a="city" aria-label="المدينة">' +
       CITIES.map(function (c) { return '<option value="' + c.id + '"' + (c.id === st.cityId ? ' selected' : '') + '>' + c.name + '</option>'; }).join('') +
       (st.cityId === 'gps' ? '<option value="gps" selected>موقعي الحالي</option>' : '') + '</select></div>' +
       '<div class="btns"><button class="btn ghost" data-a="geo">استخدام موقعي الحالي</button></div>' +
@@ -307,7 +324,7 @@
         }).join('') : '') + '</section>';
 
     html += '<section class="card"><h2>عن التطبيق</h2><div class="hint">' +
-      'مواقيت الصلاة تُحسب على الجهاز بدون إنترنت، وفق المذهب الجعفري: الفجر ١٦°، المغرب ٤° (ذهاب الحمرة المشرقية)، ومنتصف الليل الشرعي بين الغروب والفجر. ' +
+      'مواقيت الصلاة تُحسب على الجهاز بدون إنترنت، وفق المذهب الجعفري: المغرب ٤° (ذهاب الحمرة المشرقية)، وإعدادات الفجر ومنتصف الليل حسب المرجع المختار أعلاه. ' +
       'وقت العشاء يلي المغرب ويمتد إلى منتصف الليل الشرعي.<br><br>' +
       'هذه الحسابات للاستئناس؛ يُرجى الرجوع لمكتب مرجعك أو إدارة الأوقاف الجعفرية عند الاحتياط، خاصة في بدايات الشهور والأعياد.</div>' +
       '<div class="warn">يعمل التطبيق بدون إنترنت بعد أول فتح، ويمكن تثبيته على الشاشة الرئيسية من قائمة المتصفح.</div></section>';
@@ -360,6 +377,7 @@
   });
 
   document.addEventListener('change', function (e) {
+    if (e.target.dataset.a === 'source') { st.source = e.target.value; rebuild(); render(true); return; }
     if (e.target.dataset.a !== 'city') return;
     const c = CITIES.filter(function (x) { return x.id === e.target.value; })[0];
     if (!c) return;
