@@ -1,6 +1,6 @@
 // Service worker: يخزّن ملفات التطبيق ليعمل بدون إنترنت.
 // غيّر رقم النسخة عند أي تعديل على الملفات.
-const CACHE = 'hadi-v5';
+const CACHE = 'hadi-v6';
 const FILES = [
   './', 'index.html', 'css/style.css',
   'js/hijri.js', 'js/prayer.js', 'js/calendar-data.js', 'js/events.js', 'js/app.js',

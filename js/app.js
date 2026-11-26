@@ -88,10 +88,20 @@
     if (n === 2) return 'بعد يومين';
     return 'بعد ' + ar(n) + (n <= 10 ? ' أيام' : ' يوماً');
   }
-  function cdParts(sec) {
+  // مفرد، مثنى، جمع قلة (3–10)، جمع كثرة (11+)
+  function plural(n, w) {
+    if (n === 1) return w[0];
+    if (n === 2) return w[1];
+    return ar(n) + ' ' + (n >= 3 && n <= 10 ? w[2] : w[3]);
+  }
+  const UNIT = { h: ['ساعة', 'ساعتان', 'ساعات', 'ساعة'], m: ['دقيقة', 'دقيقتان', 'دقائق', 'دقيقة'], s: ['ثانية', 'ثانيتان', 'ثوانٍ', 'ثانية'] };
+  function cdText(sec) {
     sec = Math.max(0, Math.floor(sec));
     const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
-    return h > 0 ? [[h, 'ساعة'], [m, 'دقيقة']] : [[m, 'دقيقة'], [s, 'ثانية']];
+    const parts = h > 0 ? [plural(h, UNIT.h)] : [];
+    if (h > 0 && m > 0) parts.push(plural(m, UNIT.m));
+    else if (h === 0) { if (m > 0) parts.push(plural(m, UNIT.m)); parts.push(plural(s, UNIT.s)); }
+    return parts.join(' و');
   }
 
   /* ---------- المناسبات ---------- */
@@ -162,28 +172,47 @@
   };
 
   /* ---------- الرئيسية ---------- */
+  // الرقم الكبير للمناسبة القادمة: [نص كبير, وحدة]
+  function daysBig(n, ev) {
+    if (n === 0) return ['اليوم', ''];
+    if (n === 1) return [ev && ev.night ? 'الليلة' : 'غداً', ''];
+    if (n === 2) return ['يومين', ''];
+    return [ar(n), n <= 10 ? 'أيام' : 'يوماً'];
+  }
+
   function homeHtml() {
     const t = now();
     const h = hj.fromJdn(t.jdn);
     const times = dayTimes(t.jdn);
-    const ups = upcoming(t.jdn, 400, 4);
+    const ups = upcoming(t.jdn, 400, 5);
     const dd = deeds(t.jdn, h);
 
     let html = '<div class="date"><div class="wd">' + H.WEEKDAYS[H.weekday(t.jdn)] + '</div>' +
-      '<div class="hd">' + fmtH(h) + '</div><div class="gd">' + fmtG(t.jdn) + '</div></div>' +
-      '<div class="cd"><div class="big" id="cdBig" aria-live="off"></div>' +
-      '<div class="to"><b id="nextName"></b> <span id="nextTm"></span></div></div>' +
-      '<div class="bar"><i id="barFill"></i></div>';
+      '<div class="hd">' + fmtH(h) + '</div><div class="gd">' + fmtG(t.jdn) + '</div></div>';
 
-    html += '<div class="grp" id="timesList">' + PRAYERS.map(function (p) {
-      return '<div class="pr" data-k="' + p.k + '"><span>' + p.n + '</span><b>' + clock(times[p.k]) + '</b></div>';
-    }).join('') + '</div>' +
+    if (ups.length) {
+      const f = ups[0], n = f.jdn - t.jdn, big = daysBig(n, f.ev);
+      const nowYear = H.jdnToGreg(t.jdn).y;
+      html += '<section class="hero" aria-label="المناسبة القادمة">' +
+        '<div class="big"><span class="n">' + big[0] + '</span>' + (big[1] ? '<span class="u">' + big[1] + '</span>' : '') + '</div>' +
+        '<div class="ot ' + typeClass(f.ev.type) + '"><i class="dot"></i><span>' + f.ev.title + '</span></div>' +
+        '<div class="os">' + ar(f.h.d) + ' ' + H.HIJRI_MONTHS[f.h.m - 1] + ' · ' + fmtG(f.jdn, true, H.jdnToGreg(f.jdn).y !== nowYear) + '</div>' +
+        (f.ev.note ? '<div class="os">' + f.ev.note + '</div>' : '') +
+        (f.ev.night ? '<div class="os">ليلة: تبدأ عند مغرب اليوم السابق لهذا التاريخ</div>' : '') +
+        '</section>';
+    }
+
+    html += '<div class="npline" id="npLine"></div>' +
+      '<div class="grp" id="timesList" style="margin-top:8px">' + PRAYERS.map(function (p) {
+        return '<div class="pr" data-k="' + p.k + '"><span>' + p.n + '</span><b>' + clock(times[p.k]) + '</b></div>';
+      }).join('') + '</div>' +
       '<p class="note">' + (st.source === 'hawza'
         ? 'على تقويم حوزة الهدى (البحرين). منتصف الليل بين الغروب والشروق، ويُحتاط ' + ar(3) + ' دقائق بعد وقت الفجر.'
         : 'حسب المذهب الجعفري: الفجر ' + ar(16) + '°، والمغرب بعد ذهاب الحمرة المشرقية (' + ar(4) + '°).') + '</p>';
 
-    html += '<h2 class="sec">المناسبات القادمة <button class="link" data-a="nav" data-v="occ">الكل</button></h2>' +
-      (ups.length ? ups.map(function (i) { return evRow(i, t.jdn); }).join('') : '<div class="empty">لا مناسبات قريبة</div>');
+    const rest = ups.slice(1, 4);
+    html += '<h2 class="sec">بعدها <button class="link" data-a="nav" data-v="occ">كل المناسبات</button></h2>' +
+      (rest.length ? rest.map(function (i) { return evRow(i, t.jdn); }).join('') : '<div class="empty">لا مناسبات أخرى قريبة</div>');
 
     if (dd.length) {
       html += '<h2 class="sec">أعمال اليوم</h2>' + dd.map(function (x) { return '<div class="deed">' + x + '</div>'; }).join('');
@@ -191,11 +220,11 @@
     return html;
   }
 
-  // تحديث العدّاد والصلاة الحالية كل ثانية
+  // تحديث سطر الصلاة القادمة والصلاة الحالية كل ثانية
   function tick() {
     if (view !== 'home') return;
-    const big = document.getElementById('cdBig');
-    if (!big) return;
+    const line = document.getElementById('npLine');
+    if (!line) return;
     const t = now();
     const times = dayTimes(t.jdn);
     const list = PRAYERS.map(function (p) { return { k: p.k, n: p.n, at: times[p.k] * 3600 }; });
@@ -206,18 +235,7 @@
     let cur = -1;
     for (let i = 0; i < PRAYERS.length; i++) if (list[i].at <= t.sec) cur = i;
 
-    big.innerHTML = cdParts(nx.at - t.sec).map(function (p) {
-      return '<span class="n">' + ar(p[0]) + '</span><span class="u">' + p[1] + '</span>';
-    }).join('');
-    document.getElementById('nextName').textContent = 'حتى ' + nx.n;
-    document.getElementById('nextTm').textContent = '· ' + clock(nx.at / 3600);
-
-    // شريط التقدم بين الوقت السابق والقادم
-    let prevAt;
-    if (cur >= 0) prevAt = list[cur].at;
-    else prevAt = dayTimes(t.jdn - 1).midnight * 3600 - 86400;
-    const frac = Math.max(0, Math.min(1, (t.sec - prevAt) / Math.max(1, nx.at - prevAt)));
-    document.getElementById('barFill').style.width = (frac * 100).toFixed(1) + '%';
+    line.innerHTML = '<b>' + nx.n + '</b> بعد ' + cdText(nx.at - t.sec);
 
     document.querySelectorAll('#timesList .pr').forEach(function (row, i) {
       row.className = 'pr' + (i === cur ? ' cur' : i < cur ? ' pass' : i === ni ? ' nxt' : '');
