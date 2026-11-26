@@ -1,0 +1,38 @@
+name: تحديث بدايات الشهور
+
+# يفحص موقع حوزة الهدى ثلاث مرات يومياً؛ إذا نزل جدول شهر جديد يحدّث js/calendar-data.js
+# ويرفع الملفات، فيتحدّث الموقع تلقائياً.
+on:
+  schedule:
+    - cron: '23 5,11,17 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-months
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: تثبيت pdftotext
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: فحص الجداول الجديدة
+        run: node scripts/update-months.js
+      - name: اختبارات
+        run: node tests/test.js
+      - name: رفع التحديث
+        run: |
+          if git diff --quiet; then echo "لا تغيير"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/calendar-data.js sw.js
+          git commit -m "تحديث بدايات الشهور من تقويم حوزة الهدى"
+          git push

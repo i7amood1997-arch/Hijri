@@ -95,4 +95,16 @@ assert.strictEqual(hz.monthLength(1448, 2), 30);                 // صفر ٣٠
 assert.strictEqual(hz.monthStart(1448, 2), H.gregToJdn(2026, 7, 16));
 assert.strictEqual(hz.fromJdn(H.gregToJdn(2026, 6, 26)).d, 10);  // عاشوراء الجمعة ٢٦ يونيو
 
+// محلل جداول الحوزة (scripts/update-months.js): أشكال نص مختلفة خرجت من ملفات PDF فعلية
+const U = require('../scripts/update-months.js');
+assert.strictEqual(U.weekdayOf('الخميس'), 4);
+assert.strictEqual(U.weekdayOf('\u202bبعاء\u202c\u202bر\u202c\u202bاأل\u202c'), 3);   // الأربعاء مقسّمة
+assert.strictEqual(U.weekdayOf('الخم\ufffdس'), 4);                                          // حرف تالف
+assert.strictEqual(U.weekdayOf('اﻟثﻼﺜﺎء'), 2);                                                // أشكال العرض
+assert.strictEqual(U.weekdayOf('األحد'), 0);
+assert.deepStrictEqual(U.parseFirstDay('x\n١\nاﻟﺨﻤﻴﺲ\n١٢\n4:41'), { d: 12, wd: 4 });
+assert.deepStrictEqual(U.resolveDate({ d: 12, wd: 4 }, 1448, 6), [2026, 11, 12]);
+assert.deepStrictEqual(U.resolveDate({ d: 16, wd: 4 }, 1448, 2), [2026, 7, 16]);          // يخالف الحساب العام بيوم
+assert.throws(() => U.resolveDate({ d: 20, wd: 4 }, 1448, 6));                            // تاريخ بعيد → يرفض
+
 console.log('كل الاختبارات نجحت ✔');
