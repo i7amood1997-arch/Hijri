@@ -3,9 +3,25 @@
 
   const H = window.Hijri, P = window.Prayer, E = window.Occasions, CD = window.CalendarData;
 
+  /* ---------- الإعدادات ---------- */
+  const KEY = 'hadi.settings.v1';
+  const DEFAULTS = {
+    cityId: 'manama', name: 'المنامة', lat: 26.2285, lng: 50.5860, tz: 3,
+    source: 'hawza', digits: 'latin', offset: 0, overrides: {}, adj: {}
+  };
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY) || '{}');
+      return Object.assign({}, DEFAULTS, s, { overrides: s.overrides || {}, adj: s.adj || {} });
+    } catch (e) { return Object.assign({}, DEFAULTS); }
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* ignore */ } }
+  let st = load();
+
   /* ---------- أدوات ---------- */
   const AR = '٠١٢٣٤٥٦٧٨٩';
-  const ar = function (n) { return String(n).replace(/\d/g, function (d) { return AR[d]; }); };
+  // الأرقام: إنجليزية (123) افتراضياً، وعربية (١٢٣) من الإعدادات
+  const ar = function (n) { return st.digits === 'arabic' ? String(n).replace(/\d/g, function (d) { return AR[d]; }) : String(n); };
   const pad = function (n) { return (n < 10 ? '0' : '') + n; };
   const $view = document.getElementById('view');
 
@@ -21,29 +37,14 @@
   ];
 
   const PRAYERS = [
-    { k: 'fajr', n: 'الفجر', main: true },
+    { k: 'fajr', n: 'الفجر' },
     { k: 'sunrise', n: 'الشروق' },
-    { k: 'dhuhr', n: 'الظهر', main: true },
+    { k: 'dhuhr', n: 'الظهر' },
     { k: 'sunset', n: 'الغروب' },
-    { k: 'maghrib', n: 'المغرب', main: true },
-    { k: 'midnight', n: 'منتصف الليل الشرعي' }
+    { k: 'maghrib', n: 'المغرب' },
+    { k: 'midnight', n: 'منتصف الليل' }
   ];
 
-  /* ---------- الإعدادات ---------- */
-  const KEY = 'hadi.settings.v1';
-  const DEFAULTS = {
-    cityId: 'manama', name: 'المنامة', lat: 26.2285, lng: 50.5860, tz: 3,
-    source: 'hawza', offset: 0, overrides: {}, adj: {}
-  };
-  function load() {
-    try {
-      const s = JSON.parse(localStorage.getItem(KEY) || '{}');
-      return Object.assign({}, DEFAULTS, s, { overrides: s.overrides || {}, adj: s.adj || {} });
-    } catch (e) { return Object.assign({}, DEFAULTS); }
-  }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* ignore */ } }
-
-  let st = load();
   function buildCal() {
     const base = st.source === 'hawza' ? CD.toJdnMap(CD.HAWZA, H.gregToJdn) : {};
     return H.create({ offset: st.offset, overrides: Object.assign({}, base, st.overrides) });
@@ -70,37 +71,30 @@
     let h12 = hh % 12; if (h12 === 0) h12 = 12;
     return ar(h12) + ':' + ar(pad(mm)) + ' ' + (hh >= 12 ? 'م' : 'ص');
   }
-  function hms(sec) {
-    sec = Math.max(0, Math.floor(sec));
-    return ar(pad(Math.floor(sec / 3600))) + ':' + ar(pad(Math.floor(sec % 3600 / 60))) + ':' + ar(pad(sec % 60));
+  function clockShort(h) {
+    let m = Math.round(h * 60); m = ((m % 1440) + 1440) % 1440;
+    let h12 = Math.floor(m / 60) % 12; if (h12 === 0) h12 = 12;
+    return ar(h12) + ':' + ar(pad(m % 60));
   }
 
-  function gregOf(jdn) { return H.jdnToGreg(jdn); }
-  function fmtG(jdn, withDay) {
-    const g = gregOf(jdn);
-    return (withDay ? H.WEEKDAYS[H.weekday(jdn)] + ' ' : '') + ar(g.d) + ' ' + H.GREG_MONTHS[g.m - 1] + ' ' + ar(g.y) + 'م';
+  function fmtG(jdn, withDay, withYear) {
+    const g = H.jdnToGreg(jdn);
+    return (withDay ? H.WEEKDAYS[H.weekday(jdn)] + ' ' : '') + ar(g.d) + ' ' + H.GREG_MONTHS[g.m - 1] + (withYear === false ? '' : ' ' + ar(g.y));
   }
-  function fmtH(h) { return ar(h.d) + ' ' + H.HIJRI_MONTHS[h.m - 1] + ' ' + ar(h.y) + 'هـ'; }
+  function fmtH(h) { return ar(h.d) + ' ' + H.HIJRI_MONTHS[h.m - 1] + ' ' + ar(h.y); }
   function daysText(n) {
     if (n === 0) return 'اليوم';
     if (n === 1) return 'غداً';
     if (n === 2) return 'بعد يومين';
     return 'بعد ' + ar(n) + (n <= 10 ? ' أيام' : ' يوماً');
   }
+  function cdParts(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return h > 0 ? [[h, 'ساعة'], [m, 'دقيقة']] : [[m, 'دقيقة'], [s, 'ثانية']];
+  }
 
   /* ---------- المناسبات ---------- */
-  // اليوم الصالح حسب تقويم الحوزة (يمتد من ليلة اليوم حتى نهايته)
-  function isSalih(h) {
-    if (st.source !== 'hawza') return false;
-    const a = CD.SALIH[h.y + '-' + h.m];
-    return !!a && a.indexOf(h.d) >= 0;
-  }
-  const SALIH_TXT = 'من الأيام الصالحة حسب تقويم الحوزة (تمتد من ليلة اليوم حتى نهايته)';
-
-  function eventsOnJdn(jdn) {
-    const h = hj.fromJdn(jdn);
-    return E.on(h.m, h.d, hj.monthLength(h.y, h.m));
-  }
   function upcoming(fromJdn, days, limit, filter) {
     const out = [];
     for (let j = fromJdn; j < fromJdn + days && out.length < limit; j++) {
@@ -111,21 +105,28 @@
     }
     return out;
   }
+  const typeClass = function (t) { return t === 'joy' ? 'joy' : t === 'grief' ? 'grief' : t === 'eid' ? 'eid' : 'info'; };
 
-  function evRow(item, nowJdn, showMonthStart) {
+  function evRow(item, nowJdn, showDate) {
     const ev = item.ev, h = item.h;
-    const n = item.jdn - nowJdn;
-    return '<div class="ev t-' + ev.type + '">' +
-      '<div class="badge"><b>' + ar(h.d) + '</b><small>' + H.HIJRI_MONTHS[h.m - 1].replace('شهر ', '') + '</small></div>' +
-      '<div style="flex:1;min-width:0">' +
-        '<div class="tt">' + ev.title + '</div>' +
-        '<div class="meta"><span class="tag">' + (ev.night ? 'ليلة' : E.TYPE_LABEL[ev.type]) + '</span>' + fmtG(item.jdn, true) + '</div>' +
-        (ev.note ? '<div class="nt">' + ev.note + '</div>' : '') +
-        (ev.night ? '<div class="nt">تبدأ عند مغرب اليوم السابق لهذا التاريخ</div>' : '') +
-      '</div>' +
-      (nowJdn != null && n >= 0 ? '<div class="when">' + daysText(n) + '</div>' : '') +
-    '</div>';
+    const n = nowJdn == null ? -1 : item.jdn - nowJdn;
+    const nowYear = H.jdnToGreg(nowJdn == null ? item.jdn : nowJdn).y;
+    const sub = (showDate === false ? '' : ar(h.d) + ' ' + H.HIJRI_MONTHS[h.m - 1] + ' · ' + fmtG(item.jdn, true, H.jdnToGreg(item.jdn).y !== nowYear));
+    return '<div class="oc ' + typeClass(ev.type) + '"><i class="dot"></i><div>' +
+      '<div class="t">' + ev.title + '</div>' +
+      (sub ? '<div class="s">' + sub + '</div>' : '') +
+      (ev.note ? '<div class="s">' + ev.note + '</div>' : '') +
+      (ev.night ? '<div class="s">ليلة: تبدأ عند مغرب اليوم السابق لهذا التاريخ</div>' : '') +
+      '</div>' + (n >= 0 ? '<div class="w">' + daysText(n) + '</div>' : '<div></div>') + '</div>';
   }
+
+  // اليوم الصالح حسب تقويم الحوزة (يمتد من ليلة اليوم حتى نهايته)
+  function isSalih(h) {
+    if (st.source !== 'hawza') return false;
+    const a = CD.SALIH[h.y + '-' + h.m];
+    return !!a && a.indexOf(h.d) >= 0;
+  }
+  const SALIH_TXT = 'من الأيام الصالحة حسب تقويم الحوزة (تمتد من ليلة اليوم حتى نهايته)';
 
   function deeds(jdn, h) {
     const out = [];
@@ -141,11 +142,12 @@
 
   /* ---------- الحالة ---------- */
   let view = 'home';
-  let calYM = null;      // {y, m}
+  let calYM = null;
   let selJdn = null;
   let occFilter = 'all';
   let showAdjust = false;
-  let tickRef = null;
+  let showSalihOn = false;
+  let tickDay = null;
 
   const FILTERS = {
     all: null,
@@ -154,40 +156,37 @@
     other: function (ev) { return ev.type === 'eid' || ev.type === 'ibadah' || ev.type === 'month'; }
   };
 
-  /* ---------- الشاشة الرئيسية ---------- */
+  const ICONS = {
+    next: '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
+    prev: '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>'
+  };
+
+  /* ---------- الرئيسية ---------- */
   function homeHtml() {
     const t = now();
     const h = hj.fromJdn(t.jdn);
     const times = dayTimes(t.jdn);
-    const tomorrow = hj.fromJdn(t.jdn + 1);
     const ups = upcoming(t.jdn, 400, 4);
     const dd = deeds(t.jdn, h);
 
-    let html = '<section class="card hero">' +
-      '<div class="wd">' + H.WEEKDAYS[H.weekday(t.jdn)] + '</div>' +
-      '<div class="hd">' + fmtH(h) + '</div>' +
-      '<div class="gd">' + fmtG(t.jdn) + '</div>' +
-      '<div class="next"><div><div class="lbl">الصلاة القادمة</div><div class="nm" id="nextName"></div></div>' +
-      '<div><div class="cd" id="nextCd"></div><div class="tm" id="nextTm"></div></div></div>' +
-      '<div class="night">بعد المغرب تبدأ ليلة ' + H.WEEKDAYS[H.weekday(t.jdn + 1)] + ' — ' + fmtH(tomorrow) + '</div>' +
-    '</section>';
+    let html = '<div class="date"><div class="wd">' + H.WEEKDAYS[H.weekday(t.jdn)] + '</div>' +
+      '<div class="hd">' + fmtH(h) + '</div><div class="gd">' + fmtG(t.jdn) + '</div></div>' +
+      '<div class="cd"><div class="big" id="cdBig" aria-live="off"></div>' +
+      '<div class="to"><b id="nextName"></b> <span id="nextTm"></span></div></div>' +
+      '<div class="bar"><i id="barFill"></i></div>';
 
-    html += '<section class="card"><h2>مواقيت الصلاة</h2><ul class="times" id="timesList">' +
-      PRAYERS.map(function (p) {
-        return '<li data-k="' + p.k + '" class="' + (p.main ? '' : 'sub') + '"><span class="n">' + p.n + '</span><span class="t">' + clock(times[p.k]) + '</span></li>';
-      }).join('') +
-      '</ul><div class="note">' + (st.source === 'hawza'
-        ? 'على تقويم حوزة الهدى (البحرين): منتصف الليل بين الغروب والشروق، ويُحتاط ٣ دقائق بعد وقت الفجر. '
-        : 'حسب المذهب الجعفري: الفجر ١٦°، والمغرب بعد ذهاب الحمرة المشرقية (٤°). ') + st.name + '</div></section>';
+    html += '<div class="grp" id="timesList">' + PRAYERS.map(function (p) {
+      return '<div class="pr" data-k="' + p.k + '"><span>' + p.n + '</span><b>' + clock(times[p.k]) + '</b></div>';
+    }).join('') + '</div>' +
+      '<p class="note">' + (st.source === 'hawza'
+        ? 'على تقويم حوزة الهدى (البحرين). منتصف الليل بين الغروب والشروق، ويُحتاط ' + ar(3) + ' دقائق بعد وقت الفجر.'
+        : 'حسب المذهب الجعفري: الفجر ' + ar(16) + '°، والمغرب بعد ذهاب الحمرة المشرقية (' + ar(4) + '°).') + '</p>';
 
-    html += '<section class="card"><h2>المناسبات القادمة <button class="link" data-a="nav" data-v="occ">عرض الكل</button></h2>' +
-      (ups.length ? ups.map(function (i) { return evRow(i, t.jdn); }).join('') : '<div class="empty">لا مناسبات قريبة</div>') +
-    '</section>';
+    html += '<h2 class="sec">المناسبات القادمة <button class="link" data-a="nav" data-v="occ">الكل</button></h2>' +
+      (ups.length ? ups.map(function (i) { return evRow(i, t.jdn); }).join('') : '<div class="empty">لا مناسبات قريبة</div>');
 
     if (dd.length) {
-      html += '<section class="card"><h2>أعمال اليوم</h2>' +
-        dd.map(function (x) { return '<div class="ev"><div class="nt" style="color:var(--ink);font-size:15px">• ' + x + '</div></div>'; }).join('') +
-      '</section>';
+      html += '<h2 class="sec">أعمال اليوم</h2>' + dd.map(function (x) { return '<div class="deed">' + x + '</div>'; }).join('');
     }
     return html;
   }
@@ -195,23 +194,38 @@
   // تحديث العدّاد والصلاة الحالية كل ثانية
   function tick() {
     if (view !== 'home') return;
+    const big = document.getElementById('cdBig');
+    if (!big) return;
     const t = now();
-    const el = document.getElementById('nextCd');
-    if (!el) return;
     const times = dayTimes(t.jdn);
     const list = PRAYERS.map(function (p) { return { k: p.k, n: p.n, at: times[p.k] * 3600 }; });
     list.push({ k: 'fajr', n: 'الفجر', at: times.nextFajr * 3600 });
-    let nextIdx = list.findIndex(function (x) { return x.at > t.sec; });
-    if (nextIdx < 0) nextIdx = list.length - 1;
-    const nx = list[nextIdx];
-    document.getElementById('nextName').textContent = nx.n;
-    el.textContent = hms(nx.at - t.sec);
-    document.getElementById('nextTm').textContent = 'عند ' + clock(nx.at / 3600);
-    // الفترة الحالية
+    let ni = list.findIndex(function (x) { return x.at > t.sec; });
+    if (ni < 0) ni = list.length - 1;
+    const nx = list[ni];
     let cur = -1;
     for (let i = 0; i < PRAYERS.length; i++) if (list[i].at <= t.sec) cur = i;
-    document.querySelectorAll('#timesList li').forEach(function (li, i) { li.classList.toggle('cur', i === cur); });
-    if (hj.fromJdn(t.jdn).d !== tickRef) { tickRef = hj.fromJdn(t.jdn).d; render(true); }
+
+    big.innerHTML = cdParts(nx.at - t.sec).map(function (p) {
+      return '<span class="n">' + ar(p[0]) + '</span><span class="u">' + p[1] + '</span>';
+    }).join('');
+    document.getElementById('nextName').textContent = 'حتى ' + nx.n;
+    document.getElementById('nextTm').textContent = '· ' + clock(nx.at / 3600);
+
+    // شريط التقدم بين الوقت السابق والقادم
+    let prevAt;
+    if (cur >= 0) prevAt = list[cur].at;
+    else prevAt = dayTimes(t.jdn - 1).midnight * 3600 - 86400;
+    const frac = Math.max(0, Math.min(1, (t.sec - prevAt) / Math.max(1, nx.at - prevAt)));
+    document.getElementById('barFill').style.width = (frac * 100).toFixed(1) + '%';
+
+    document.querySelectorAll('#timesList .pr').forEach(function (row, i) {
+      row.className = 'pr' + (i === cur ? ' cur' : i < cur ? ' pass' : i === ni ? ' nxt' : '');
+    });
+
+    const dk = hj.fromJdn(t.jdn).d;
+    if (tickDay === null) tickDay = dk;
+    else if (dk !== tickDay) { tickDay = dk; render(true); }
   }
 
   /* ---------- التقويم ---------- */
@@ -220,65 +234,60 @@
     if (!calYM) { const h = hj.fromJdn(t.jdn); calYM = { y: h.y, m: h.m }; }
     const y = calYM.y, m = calYM.m;
     const start = hj.monthStart(y, m), len = hj.monthLength(y, m);
-    const g1 = gregOf(start), g2 = gregOf(start + len - 1);
+    const g1 = H.jdnToGreg(start), g2 = H.jdnToGreg(start + len - 1);
     if (selJdn == null || selJdn < start || selJdn >= start + len) {
       selJdn = (t.jdn >= start && t.jdn < start + len) ? t.jdn : start;
     }
     const lead = (H.weekday(start) + 1) % 7; // السبت أول الأسبوع
-    const days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    const days = ['سبت', 'أحد', 'اثن', 'ثلا', 'أرب', 'خمس', 'جمع'];
 
-    let cells = '';
+    let cells = days.map(function (n) { return '<div class="w">' + n + '</div>'; }).join('');
     for (let i = 0; i < lead; i++) cells += '<div class="cell void"></div>';
     for (let d = 1; d <= len; d++) {
       const j = start + d - 1;
       const evs = E.on(m, d, len);
       const wd = H.weekday(j);
-      const g = gregOf(j);
-      const types = evs.map(function (e) { return e.type; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
-      cells += '<button class="cell' + (j === t.jdn ? ' today' : '') + (j === selJdn ? ' sel' : '') + (wd === 5 ? ' fri' : '') + (isSalih({ y: y, m: m, d: d }) ? ' salih' : '') + '" data-a="pick" data-j="' + j + '" aria-label="' + ar(d) + ' ' + H.HIJRI_MONTHS[m - 1] + (isSalih({ y: y, m: m, d: d }) ? ' — يوم صالح' : '') + '">' +
-        '<span class="h">' + ar(d) + '</span><span class="g">' + ar(g.d) + '</span>' +
-        '<span class="dots">' + types.map(function (ty) { return '<i class="t-' + ty + '"></i>'; }).join('') + '</span></button>';
+      const sal = isSalih({ y: y, m: m, d: d });
+      cells += '<button class="cell ' + (evs.length ? typeClass(evs[0].type) : '') + (sal ? ' salih' : '') + (wd === 5 ? ' fri' : '') + (j === t.jdn ? ' today' : '') + (j === selJdn ? ' sel' : '') +
+        '" data-a="pick" data-j="' + j + '" aria-label="' + ar(d) + ' ' + H.HIJRI_MONTHS[m - 1] + (sal ? ' — يوم صالح' : '') + (evs.length ? ' — ' + evs[0].title : '') + '">' +
+        '<span class="nn">' + ar(d) + '</span><span class="gg">' + ar(H.jdnToGreg(j).d) + '</span>' + (evs.length ? '<i class="ev"></i>' : '') + '</button>';
     }
 
     const gTitle = g1.m === g2.m ? H.GREG_MONTHS[g1.m - 1] + ' ' + ar(g1.y) :
       H.GREG_MONTHS[g1.m - 1] + (g1.y !== g2.y ? ' ' + ar(g1.y) : '') + ' – ' + H.GREG_MONTHS[g2.m - 1] + ' ' + ar(g2.y);
 
-    let html = '<div class="calhead">' +
-      '<button class="icon-btn" data-a="next" aria-label="الشهر التالي">›</button>' +
-      '<div class="ttl"><b>' + H.HIJRI_MONTHS[m - 1] + ' ' + ar(y) + 'هـ</b><span>' + gTitle + ' · ' + ar(len) + ' يوماً</span></div>' +
-      '<button class="icon-btn" data-a="prev" aria-label="الشهر السابق">‹</button></div>' +
-      '<div class="btns" style="justify-content:center;margin:0 0 4px"><button class="chip" data-a="today">اليوم</button>' +
-      '<button class="chip" data-a="toggleAdjust" aria-pressed="' + showAdjust + '">ضبط بداية الشهر</button></div>';
+    let html = '<div class="mt"><button class="ib" data-a="next" aria-label="الشهر التالي">' + ICONS.next + '</button>' +
+      '<div class="n">' + H.HIJRI_MONTHS[m - 1] + ' ' + ar(y) + '<small>' + gTitle + ' · ' + ar(len) + ' يوماً</small></div>' +
+      '<button class="ib" data-a="prev" aria-label="الشهر السابق">' + ICONS.prev + '</button></div>' +
+      '<div class="tools"><button class="pill" data-a="today" aria-pressed="false">اليوم</button>' +
+      (st.source === 'hawza' ? '<button class="pill" data-a="toggleSalih" aria-pressed="' + showSalihOn + '">الأيام الصالحة</button>' : '') +
+      '<button class="pill" data-a="toggleAdjust" aria-pressed="' + showAdjust + '">ضبط بداية الشهر</button></div>';
 
     if (showAdjust) {
       const isOv = st.overrides[y + '-' + m] != null;
       const fromSrc = !isOv && st.source === 'hawza' && CD.HAWZA[y + '-' + m] != null;
-      html += '<div class="card"><div class="row" style="padding-top:0"><div><b>أول ' + H.HIJRI_MONTHS[m - 1] + '</b><div class="d">' + fmtG(start, true) + (isOv ? ' · معدّل يدوياً' : fromSrc ? ' · من تقويم الحوزة' : '') + '</div></div>' +
-        '<div class="step"><button data-a="ms" data-d="-1" aria-label="يوم قبل">−</button><span>١ يوم</span><button data-a="ms" data-d="1" aria-label="يوم بعد">+</button></div></div>' +
-        '<div class="hint">يبدأ الشهر عند الشيعة بالرؤية. اضبط اليوم حسب إعلان إدارة الأوقاف الجعفرية في البحرين أو مرجعك. تغيير بداية شهر يغيّر طول الشهر السابق له تلقائياً.</div>' +
-        (isOv ? '<div class="btns"><button class="btn ghost" data-a="msreset">إعادة للحساب الافتراضي</button></div>' : '') + '</div>';
+      html += '<div class="grp" style="margin-top:14px"><div class="pr"><span>أول ' + H.HIJRI_MONTHS[m - 1] +
+        '<span class="d">' + fmtG(start, true) + (isOv ? ' · معدّل يدوياً' : fromSrc ? ' · من تقويم الحوزة' : '') + '</span></span>' +
+        '<div class="step"><button data-a="ms" data-d="-1" aria-label="يوم قبل">−</button><span>' + ar(1) + ' يوم</span><button data-a="ms" data-d="1" aria-label="يوم بعد">+</button></div></div>' +
+        '<div class="pad hint">يبدأ الشهر عند الشيعة بالرؤية. اضبط اليوم حسب إعلان إدارة الأوقاف الجعفرية في البحرين أو مرجعك. تغيير بداية شهر يغيّر طول الشهر السابق له تلقائياً.</div>' +
+        (isOv ? '<div class="pad" style="padding-top:0"><button class="btn ghost" data-a="msreset">إعادة للحساب الافتراضي</button></div>' : '') + '</div>';
     }
-
     if (st.source === 'hawza' && CD.HAWZA[y + '-' + m] == null && st.overrides[y + '-' + m] == null) {
       html += '<div class="warn">بداية هذا الشهر تقديرية (حساب) إلى أن تُعلن الرؤية. بعد الإعلان اضغط «ضبط بداية الشهر».</div>';
     }
-    html += '<div class="grid">' + days.map(function (n, i) { return '<div class="dow' + (i === 6 ? ' fri' : '') + '">' + n + '</div>'; }).join('') + cells + '</div>' +
-      '<div class="legend"><span class="t-joy"><i></i>فرح</span><span class="t-grief"><i></i>حزن</span><span class="t-eid"><i></i>عيد</span><span class="t-ibadah"><i></i>عبادات</span><span class="t-month"><i></i>غرة شهر</span>' + (st.source === 'hawza' ? '<span><b style="color:var(--green)">✓</b> يوم صالح</span>' : '') + '</div>';
 
-    // تفاصيل اليوم المختار
+    html += '<div class="gr' + (showSalihOn ? ' show-salih' : '') + '">' + cells + '</div>' +
+      '<div class="lg"><span style="--c:var(--joy)"><i></i>فرح</span><span style="--c:var(--grief)"><i></i>حزن</span><span style="--c:var(--eid)"><i></i>عيد</span><span style="--c:var(--accent)"><i></i>عبادات</span></div>';
+
     const sh = hj.fromJdn(selJdn);
     const sev = E.on(sh.m, sh.d, len);
     const tm = dayTimes(selJdn);
-    html += '<section class="card detail"><h3>' + H.WEEKDAYS[H.weekday(selJdn)] + ' ' + fmtH(sh) + '</h3><div class="sub">' + fmtG(selJdn) + '</div>' +
-      (isSalih(sh) ? '<div class="hint" style="margin:6px 0"><b style="color:var(--green)">✓</b> ' + SALIH_TXT + '</div>' : '') +
-      (sev.length ? sev.map(function (ev) {
-        return evRow({ jdn: selJdn, h: sh, ev: ev }, null);
-      }).join('') : '<div class="hint" style="margin:6px 0">لا توجد مناسبة مسجّلة في هذا اليوم.</div>') +
-      '<div class="mini">' +
-        ['fajr', 'sunrise', 'dhuhr', 'sunset', 'maghrib', 'midnight'].map(function (k) {
-          return '<div>' + PRAYERS.filter(function (p) { return p.k === k; })[0].n.replace(' الشرعي', '') + '<b>' + clock(tm[k]) + '</b></div>';
-        }).join('') + '</div></section>';
-
+    html += '<section class="sheet"><div class="h">' + H.WEEKDAYS[H.weekday(selJdn)] + ' ' + fmtH(sh) + '</div>' +
+      '<div class="p">' + fmtG(selJdn) + (isSalih(sh) ? ' · من الأيام الصالحة' : '') + '</div>' +
+      (sev.length ? sev.map(function (ev) { return evRow({ jdn: selJdn, h: sh, ev: ev }, null, false); }).join('') : '<div class="hint" style="margin-top:8px">لا توجد مناسبة مسجّلة في هذا اليوم.</div>') +
+      '<div class="tm">' + [['الفجر', 'fajr'], ['الظهر', 'dhuhr'], ['المغرب', 'maghrib'], ['الليل', 'midnight']].map(function (x) {
+        return '<div><span>' + x[0] + '</span><b>' + clockShort(tm[x[1]]) + '</b></div>';
+      }).join('') + '</div></section>';
     return html;
   }
 
@@ -286,15 +295,15 @@
   function occHtml() {
     const t = now();
     const items = upcoming(t.jdn, 370, 120, FILTERS[occFilter]);
-    let html = '<div class="chips" role="group" aria-label="تصفية">' +
+    let html = '<div class="tools" role="group" aria-label="تصفية" style="padding-top:18px">' +
       [['all', 'الكل'], ['joy', 'أفراح'], ['grief', 'أحزان'], ['other', 'أعياد وعبادات']].map(function (f) {
-        return '<button class="chip" data-a="filter" data-f="' + f[0] + '" aria-pressed="' + (occFilter === f[0]) + '">' + f[1] + '</button>';
+        return '<button class="pill" data-a="filter" data-f="' + f[0] + '" aria-pressed="' + (occFilter === f[0]) + '">' + f[1] + '</button>';
       }).join('') + '</div>';
     let last = '';
     items.forEach(function (i) {
       const key = i.h.y + '-' + i.h.m;
-      if (key !== last) { html += '<div class="mh">' + H.HIJRI_MONTHS[i.h.m - 1] + ' ' + ar(i.h.y) + 'هـ</div>'; last = key; }
-      html += '<div class="card" style="margin:6px 0;padding:6px 14px">' + evRow(i, t.jdn) + '</div>';
+      if (key !== last) { html += '<h2 class="sec">' + H.HIJRI_MONTHS[i.h.m - 1] + ' ' + ar(i.h.y) + '</h2>'; last = key; }
+      html += evRow(i, t.jdn);
     });
     if (!items.length) html += '<div class="empty">لا توجد مناسبات</div>';
     html += '<p class="note">التواريخ حسب المشهور عند الشيعة الإمامية. بعض المناسبات فيها اختلاف روايات وقد نُبّه عليها. وتتبع التواريخ الميلادية بداية الشهر المضبوطة في التقويم.</p>';
@@ -302,42 +311,41 @@
   }
 
   /* ---------- الإعدادات ---------- */
-  function stepper(key, val, unit) {
+  function stepper(key, val) {
     return '<div class="step"><button data-a="adj" data-k="' + key + '" data-d="-1" aria-label="إنقاص">−</button><span>' + (val > 0 ? '+' : '') + ar(val) + '</span><button data-a="adj" data-k="' + key + '" data-d="1" aria-label="زيادة">+</button></div>';
   }
   function setHtml() {
-    let html = '<section class="card"><h2>المرجع المعتمد</h2><div class="row"><span>التقويم والمواقيت</span><select data-a="source" aria-label="المرجع">' +
-      '<option value="hawza"' + (st.source === 'hawza' ? ' selected' : '') + '>حوزة الهدى (البحرين)</option>' +
-      '<option value="general"' + (st.source === 'general' ? ' selected' : '') + '>حساب عام (جعفري)</option></select></div>' +
-      '<div class="hint">' + (st.source === 'hawza'
-        ? 'بدايات الشهور مأخوذة من تقويم الحوزة المعلن حتى جمادى الآخرة ١٤٤٨، وما بعدها تقديري. الفجر ١٦٫٥° ومنتصف الليل للشروق، حسب جداولهم.'
-        : 'تقويم حسابي والفجر ١٦° ومنتصف الليل للفجر. اضبط بداية الشهور بنفسك.') + '</div></section>' +
-      '<section class="card"><h2>الموقع</h2><div class="row"><span>المدينة</span><select data-a="city" aria-label="المدينة">' +
-      CITIES.map(function (c) { return '<option value="' + c.id + '"' + (c.id === st.cityId ? ' selected' : '') + '>' + c.name + '</option>'; }).join('') +
-      (st.cityId === 'gps' ? '<option value="gps" selected>موقعي الحالي</option>' : '') + '</select></div>' +
-      '<div class="btns"><button class="btn ghost" data-a="geo">استخدام موقعي الحالي</button></div>' +
-      '<div class="hint" id="geoMsg" style="margin-top:6px"></div></section>';
+    const opt = function (v, label, cur) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>'; };
+    let html = '<h2 class="sec">المرجع</h2><div class="grp"><div class="pr"><span>التقويم والمواقيت</span><select data-a="source" aria-label="المرجع">' +
+      opt('hawza', 'حوزة الهدى (البحرين)', st.source) + opt('general', 'حساب عام (جعفري)', st.source) + '</select></div>' +
+      '<div class="pad hint">' + (st.source === 'hawza'
+        ? 'بدايات الشهور من تقويم الحوزة المعلن، وما بعده تقديري حتى يُعلن. الفجر ' + ar('16.5') + '° ومنتصف الليل للشروق، حسب جداولهم.'
+        : 'تقويم حسابي والفجر ' + ar(16) + '° ومنتصف الليل للفجر. اضبط بداية الشهور بنفسك.') + '</div></div>';
 
-    html += '<section class="card"><h2>تعديل المواقيت (بالدقائق)</h2>' +
-      PRAYERS.map(function (p) {
-        return '<div class="row"><span>' + p.n + '</span>' + stepper('p:' + p.k, st.adj[p.k] || 0) + '</div>';
-      }).join('') +
-      '<div class="hint">للاحتياط أو لمطابقة تقويم المكتب الذي تتبعه.</div></section>';
+    html += '<h2 class="sec">الموقع</h2><div class="grp"><div class="pr"><span>المدينة</span><select data-a="city" aria-label="المدينة">' +
+      CITIES.map(function (c) { return opt(c.id, c.name, st.cityId); }).join('') +
+      (st.cityId === 'gps' ? opt('gps', 'موقعي الحالي', 'gps') : '') + '</select></div>' +
+      '<div class="pad"><button class="btn ghost" data-a="geo">استخدام موقعي الحالي</button><div class="hint" id="geoMsg" style="margin-top:6px"></div></div></div>';
+
+    html += '<h2 class="sec">الأرقام</h2><div class="grp"><div class="pr"><span>شكل الأرقام</span><select data-a="digits" aria-label="شكل الأرقام">' +
+      opt('latin', 'إنجليزية (123)', st.digits) + opt('arabic', 'عربية (١٢٣)', st.digits) + '</select></div></div>';
+
+    html += '<h2 class="sec">تعديل المواقيت (بالدقائق)</h2><div class="grp">' +
+      PRAYERS.map(function (p) { return '<div class="pr"><span>' + p.n + '</span>' + stepper('p:' + p.k, st.adj[p.k] || 0) + '</div>'; }).join('') +
+      '</div><p class="note">للاحتياط أو لمطابقة تقويم المكتب الذي تتبعه.</p>';
 
     const ovKeys = Object.keys(st.overrides).sort(function (a, b) { return st.overrides[a] - st.overrides[b]; });
-    html += '<section class="card"><h2>التقويم الهجري</h2>' +
-      '<div class="row"><div><div>إزاحة عامة على كل الشهور</div><div class="d">الأصل: التقويم الحسابي، وتُضبط الشهور بالرؤية من شاشة التقويم</div></div>' + stepper('offset', st.offset) + '</div>' +
-      (ovKeys.length ? '<div class="hint" style="margin-top:6px">شهور مضبوطة يدوياً: ' + ovKeys.length + '</div>' +
-        ovKeys.map(function (k) {
-          const p = k.split('-');
-          return '<div class="row"><span>' + H.HIJRI_MONTHS[p[1] - 1] + ' ' + ar(p[0]) + '<div class="d">يبدأ ' + fmtG(st.overrides[k], true) + '</div></span><button class="btn ghost" data-a="delov" data-k="' + k + '">إلغاء</button></div>';
-        }).join('') : '') + '</section>';
+    html += '<h2 class="sec">التقويم الهجري</h2><div class="grp"><div class="pr"><span>إزاحة عامة على الشهور<span class="d">الأصل حسابي، وتُضبط الشهور بالرؤية من شاشة التقويم</span></span>' + stepper('offset', st.offset) + '</div>' +
+      ovKeys.map(function (k) {
+        const p = k.split('-');
+        return '<div class="pr"><span>' + H.HIJRI_MONTHS[p[1] - 1] + ' ' + ar(p[0]) + '<span class="d">يبدأ ' + fmtG(st.overrides[k], true) + '</span></span><button class="btn ghost" data-a="delov" data-k="' + k + '">إلغاء</button></div>';
+      }).join('') + '</div>';
 
-    html += '<section class="card"><h2>عن التطبيق</h2><div class="hint">' +
-      'مواقيت الصلاة تُحسب على الجهاز بدون إنترنت، وفق المذهب الجعفري: المغرب ٤° (ذهاب الحمرة المشرقية)، وإعدادات الفجر ومنتصف الليل حسب المرجع المختار أعلاه. ' +
+    html += '<h2 class="sec">عن التطبيق</h2><div class="grp"><div class="pad hint">' +
+      'مواقيت الصلاة تُحسب على الجهاز بدون إنترنت، وفق المذهب الجعفري: المغرب ' + ar(4) + '° (ذهاب الحمرة المشرقية)، وإعدادات الفجر ومنتصف الليل حسب المرجع المختار. ' +
       'وقت العشاء يلي المغرب ويمتد إلى منتصف الليل الشرعي.<br><br>' +
-      'هذه الحسابات للاستئناس؛ يُرجى الرجوع لمكتب مرجعك أو إدارة الأوقاف الجعفرية عند الاحتياط، خاصة في بدايات الشهور والأعياد.</div>' +
-      '<div class="warn">يعمل التطبيق بدون إنترنت بعد أول فتح، ويمكن تثبيته على الشاشة الرئيسية من قائمة المتصفح.</div></section>';
+      'هذه الحسابات للاستئناس؛ يُرجى الرجوع لمكتب مرجعك أو إدارة الأوقاف الجعفرية عند الاحتياط، خاصة في بدايات الشهور والأعياد.<br><br>' +
+      'يعمل التطبيق بدون إنترنت بعد أول فتح، ويمكن تثبيته على الشاشة الرئيسية من قائمة المتصفح.</div></div>';
     return html;
   }
 
@@ -353,8 +361,7 @@
   }
 
   function shiftMonth(delta) {
-    let p = [calYM.y, calYM.m];
-    p = delta > 0 ? H.nextYM(p[0], p[1]) : H.prevYM(p[0], p[1]);
+    const p = delta > 0 ? H.nextYM(calYM.y, calYM.m) : H.prevYM(calYM.y, calYM.m);
     calYM = { y: p[0], m: p[1] };
     selJdn = null;
   }
@@ -371,9 +378,9 @@
     else if (a === 'pick') selJdn = +el.dataset.j;
     else if (a === 'filter') occFilter = el.dataset.f;
     else if (a === 'toggleAdjust') showAdjust = !showAdjust;
+    else if (a === 'toggleSalih') showSalihOn = !showSalihOn;
     else if (a === 'ms') {
-      const k = calYM.y + '-' + calYM.m;
-      st.overrides[k] = hj.monthStart(calYM.y, calYM.m) + (+el.dataset.d);
+      st.overrides[calYM.y + '-' + calYM.m] = hj.monthStart(calYM.y, calYM.m) + (+el.dataset.d);
       rebuild();
     } else if (a === 'msreset') { delete st.overrides[calYM.y + '-' + calYM.m]; rebuild(); }
     else if (a === 'delov') { delete st.overrides[el.dataset.k]; rebuild(); }
@@ -387,8 +394,10 @@
   });
 
   document.addEventListener('change', function (e) {
-    if (e.target.dataset.a === 'source') { st.source = e.target.value; rebuild(); render(true); return; }
-    if (e.target.dataset.a !== 'city') return;
+    const a = e.target.dataset.a;
+    if (a === 'source') { st.source = e.target.value; rebuild(); render(true); return; }
+    if (a === 'digits') { st.digits = e.target.value; save(); render(true); return; }
+    if (a !== 'city') return;
     const c = CITIES.filter(function (x) { return x.id === e.target.value; })[0];
     if (!c) return;
     st.cityId = c.id; st.name = c.name; st.lat = c.lat; st.lng = c.lng; st.tz = 3;
