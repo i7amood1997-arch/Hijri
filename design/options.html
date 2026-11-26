@@ -1,0 +1,455 @@
+<title>اتجاهات تصميم الهادي</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=Tajawal:wght@400;500;700&family=Aref+Ruqaa:wght@400;700&family=Almarai:wght@400;700&family=Cairo:wght@400;600;800;900&family=Noto+Sans+Arabic:wght@400;600;700&display=swap">
+<style>
+/* Layout concept: a review page. Each direction gets a section: its idea, palette, and two real screens in phone frames. */
+:root {
+  --bg: #f4f5f6; --fg: #16191c; --muted: #5c646b; --line: #dcdfe2; --card: #ffffff; --accent: #14306b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #101315; --fg: #eceff1; --muted: #9aa3aa; --line: #2a3035; --card: #181c1f; --accent: #8fb0ff; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #101315; --fg: #eceff1; --muted: #9aa3aa; --line: #2a3035; --card: #181c1f; --accent: #8fb0ff; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { direction: rtl; }
+body { background: var(--bg); color: var(--fg); font-family: "Noto Sans Arabic", Tajawal, system-ui, sans-serif; line-height: 1.7;
+  padding-inline: 0; padding-block: 0; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: clamp(26px, 5vw, 38px); line-height: 1.25; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-size: clamp(22px, 4vw, 28px); margin: 0 0 6px; text-wrap: balance; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 62ch; }
+.sec { margin-top: 52px; padding-top: 28px; border-top: 1px solid var(--line); }
+.idea { max-width: 66ch; color: var(--muted); margin-bottom: 14px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-bottom: 20px; font-size: 14px; color: var(--muted); }
+.sw { display: inline-flex; gap: 4px; }
+.sw i { width: 22px; height: 22px; border-radius: 50%; display: block; border: 1px solid rgba(128,128,128,.35); }
+.frames { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.pts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 28px; margin-top: 22px; max-width: 760px; }
+.pts div { font-size: 15px; }
+.pts b { display: block; margin-bottom: 2px; }
+.cap { font-size: 13px; color: var(--muted); margin: 8px 4px 0; text-align: center; }
+.tw { overflow-x: auto; margin-top: 18px; }
+table.cmp { border-collapse: collapse; min-width: 640px; width: 100%; font-size: 14px; background: var(--card); }
+.cmp th, .cmp td { text-align: start; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.cmp th { font-weight: 700; }
+
+/* ---------- إطار الهاتف ---------- */
+.phone { width: min(100%, 360px); flex: none; }
+.screen { position: relative; height: 700px; border-radius: 30px; overflow: hidden; border: 1px solid rgba(120,120,120,.45); box-shadow: 0 10px 30px rgba(0,0,0,.18); direction: rtl; }
+.scroll { height: 100%; overflow-y: auto; padding-bottom: 76px; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+.nav { position: absolute; inset: auto 0 0 0; display: grid; grid-template-columns: repeat(4, 1fr); height: 64px; }
+.nav button { all: unset; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; }
+.nav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* =========================================================
+   A — كاشي (بلاط المقامات): لازورد وفيروز وذهب، شبكة بلاط وفواصل
+   ========================================================= */
+.A { --lapis: #14306b; --lapis2: #0b1f4d; --turq: #129c94; --glaze: #f2f6f6; --ink: #10213f; --gold: #c9a24a; --ox: #8c2a3b; --grout: #c4d3d8; --mute: #55657f;
+  background: var(--glaze); color: var(--ink); font-family: Tajawal, sans-serif; }
+.A .hero { color: #fff; padding: 16px 18px 18px; position: relative;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23c9a24a' stroke-opacity='.28' stroke-width='1'%3E%3Cpath d='M32 4l6 11 12-4-4 12 11 6-11 6 4 12-12-4-6 11-6-11-12 4 4-12-11-6 11-6-4-12 12 4z'/%3E%3Cpath d='M0 32h8M56 32h8M32 0v4M32 60v4'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--lapis) 0%, var(--lapis2) 100%); }
+.A .top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; opacity: .92; }
+.A .top b { font-family: "Reem Kufi", sans-serif; font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+.A .wd { margin-top: 18px; font-size: 14px; color: #cfe0ff; }
+.A .hd { font-family: "Reem Kufi", sans-serif; font-weight: 700; font-size: 31px; line-height: 1.3; }
+.A .gd { font-size: 14px; color: #cfe0ff; }
+.A .rule { height: 1px; background: var(--gold); margin: 14px 0 12px; opacity: .8; }
+.A .next { display: flex; justify-content: space-between; align-items: center; }
+.A .next small { font-size: 12px; color: #cfe0ff; display: block; }
+.A .next b { font-family: "Reem Kufi", sans-serif; font-size: 22px; }
+.A .cd { font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 700; direction: ltr; color: #fff; background: var(--turq); padding: 2px 12px; border-radius: 4px; }
+.A .frieze { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; padding: 3px; background: var(--grout); margin: 14px 12px 0; border-radius: 6px; }
+.A .tile { background: #fff; text-align: center; padding: 8px 0 7px; border-radius: 3px; }
+.A .tile span { display: block; font-size: 10.5px; color: var(--mute); }
+.A .tile b { display: block; font-size: 14.5px; color: var(--lapis); font-variant-numeric: tabular-nums; line-height: 1.3; }
+.A .tile small { font-size: 9px; color: var(--mute); }
+.A .tile.cur { background: var(--turq); }
+.A .tile.cur span, .A .tile.cur small, .A .tile.cur b { color: #fff; }
+.A .tile.pass { background: #e9eff0; }
+.A h3 { font-family: "Reem Kufi", sans-serif; font-size: 17px; margin: 20px 16px 4px; color: var(--lapis); display: flex; align-items: center; gap: 8px; }
+.A h3::after { content: ""; flex: 1; height: 1px; background: var(--grout); }
+.A .row { display: flex; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--grout); }
+.A .row .t { font-weight: 700; font-size: 14.5px; line-height: 1.4; }
+.A .row .s { font-size: 12.5px; color: var(--mute); }
+.A .row .w { margin-inline-start: auto; font-size: 12.5px; font-weight: 700; color: var(--turq); white-space: nowrap; }
+.A .starb { position: relative; width: 46px; height: 46px; flex: none; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 16px; }
+.A .starb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.A .starb span { position: relative; }
+.A .deed { padding: 8px 16px; font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+.A .nav { background: var(--lapis2); color: #9db3e0; }
+.A .nav .on { color: #fff; }
+.A .nav .on svg { stroke: var(--gold); }
+/* تقويم A */
+.A .cal-h { background: var(--lapis2); padding: 14px 14px 0; color: #fff; }
+.A .arch { position: relative; margin: 10px auto 0; width: 250px; height: 92px; }
+.A .arch svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.A .arch div { position: relative; text-align: center; padding-top: 26px; color: var(--lapis); }
+.A .arch b { font-family: "Reem Kufi", sans-serif; font-size: 24px; display: block; line-height: 1.2; }
+.A .arch small { font-size: 12px; color: var(--mute); }
+.A .navb { display: flex; justify-content: space-between; align-items: center; }
+.A .navb i { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--gold); color: var(--gold); font-style: normal; border-radius: 4px; }
+.A .wall { margin: 12px; padding: 3px; background: var(--grout); border-radius: 6px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.A .dow { text-align: center; font-size: 11px; color: var(--mute); padding: 4px 0; background: var(--glaze); }
+.A .c { position: relative; aspect-ratio: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 2px; }
+.A .c b { font-size: 16px; color: var(--lapis); line-height: 1.1; }
+.A .c small { font-size: 9px; color: var(--mute); line-height: 1.1; }
+.A .c.v { background: transparent; }
+.A .c.fri b { color: var(--turq); }
+.A .c.today { background: var(--turq); }
+.A .c.today b, .A .c.today small { color: #fff; }
+.A .c.sel { outline: 2px solid var(--gold); outline-offset: -2px; }
+.A .c .st { position: absolute; top: 2px; inset-inline-end: 2px; width: 10px; height: 10px; }
+.A .c .ck { position: absolute; top: 2px; inset-inline-start: 3px; width: 9px; height: 9px; color: var(--turq); }
+.A .c.today .ck { color: #fff; }
+.A .legend { display: flex; gap: 14px; margin: 0 16px; font-size: 11.5px; color: var(--mute); }
+.A .legend span { display: flex; align-items: center; gap: 5px; }
+.A .det { margin: 14px 12px 0; background: #fff; border: 1px solid var(--grout); padding: 12px 14px; border-radius: 6px; }
+.A .det b { font-family: "Reem Kufi", sans-serif; font-size: 18px; color: var(--lapis); }
+.A .det p { font-size: 13px; color: var(--mute); }
+
+/* =========================================================
+   B — ليل الخليج: سماء ليلية فوق ماء الخليج، قوس اليوم، أطوار القمر
+   ========================================================= */
+.B { --bg: #08202b; --bg2: #0f3441; --pearl: #ede9e0; --mute: #8fb0b8; --sea: #5cc8be; --ox: #e0586c; --gold: #e2be6a; --line: rgba(237,233,224,.12);
+  background: var(--bg); color: var(--pearl); font-family: Almarai, sans-serif; }
+.B .sky { position: relative; padding: 16px 18px 6px;
+  background:
+    radial-gradient(1.2px 1.2px at 12% 18%, rgba(237,233,224,.85), transparent 60%),
+    radial-gradient(1px 1px at 33% 9%, rgba(237,233,224,.6), transparent 60%),
+    radial-gradient(1.4px 1.4px at 58% 22%, rgba(237,233,224,.8), transparent 60%),
+    radial-gradient(1px 1px at 77% 12%, rgba(237,233,224,.55), transparent 60%),
+    radial-gradient(1.2px 1.2px at 90% 30%, rgba(237,233,224,.7), transparent 60%),
+    radial-gradient(1px 1px at 22% 36%, rgba(237,233,224,.5), transparent 60%),
+    linear-gradient(180deg, #06161e 0%, #0b2a36 55%, #135060 100%); }
+.B .top { display: flex; justify-content: space-between; font-size: 13px; color: var(--mute); }
+.B .hd { font-family: "Aref Ruqaa", serif; font-weight: 700; font-size: 44px; line-height: 1.25; margin-top: 10px; }
+.B .sub { font-size: 13.5px; color: var(--mute); }
+.B .arc { margin-top: 4px; }
+.B .arc text { font-family: Almarai, sans-serif; fill: var(--mute); font-size: 10.5px; text-anchor: middle; }
+.B .arc text.t { fill: var(--pearl); font-size: 11.5px; font-weight: 700; }
+.B .nextline { text-align: center; font-size: 14px; padding: 2px 0 14px; color: var(--pearl); }
+.B .nextline b { color: var(--sea); font-size: 20px; font-variant-numeric: tabular-nums; direction: ltr; display: inline-block; margin-inline-start: 4px; }
+.B .pl { margin: 0 14px; padding: 4px 0; }
+.B .pl .r { display: flex; justify-content: space-between; padding: 9px 6px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.B .pl .r.pass { color: var(--mute); }
+.B .pl .r.cur { color: var(--sea); font-weight: 700; }
+.B .pl .r b { font-variant-numeric: tabular-nums; }
+.B h3 { font-family: "Aref Ruqaa", serif; font-size: 22px; margin: 18px 18px 2px; }
+.B .oc { display: flex; gap: 12px; align-items: center; padding: 10px 18px; }
+.B .oc .t { font-size: 14.5px; line-height: 1.45; font-weight: 700; }
+.B .oc .s { font-size: 12.5px; color: var(--mute); }
+.B .oc .w { margin-inline-start: auto; font-size: 12.5px; color: var(--sea); white-space: nowrap; }
+.B .oc.grief .w { color: var(--ox); }
+.B .oc.eid .w { color: var(--gold); }
+.B .nav { background: #061a23; border-top: 1px solid var(--line); color: var(--mute); }
+.B .nav .on { color: var(--pearl); }
+.B .nav .on svg { stroke: var(--sea); }
+.B .cal-top { padding: 16px 18px 0; display: flex; justify-content: space-between; align-items: center; }
+.B .cal-top b { font-family: "Aref Ruqaa", serif; font-size: 30px; display: block; line-height: 1.2; }
+.B .cal-top small { color: var(--mute); font-size: 12.5px; }
+.B .cal-top i { font-style: normal; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; color: var(--mute); }
+.B .g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 12px 10px 0; text-align: center; }
+.B .g .dow { font-size: 11px; color: var(--mute); padding-bottom: 4px; }
+.B .d { position: relative; padding: 5px 0 4px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.B .d b { font-size: 15px; line-height: 1.1; }
+.B .d svg { width: 15px; height: 15px; }
+.B .d .dot { position: absolute; top: 4px; inset-inline-end: 7px; width: 6px; height: 6px; border-radius: 50%; }
+.B .d .ck { position: absolute; top: 4px; inset-inline-start: 6px; width: 8px; height: 8px; color: var(--sea); }
+.B .d.today { background: rgba(92,200,190,.16); box-shadow: inset 0 0 0 1.5px var(--sea); }
+.B .d.sel { box-shadow: inset 0 0 0 1.5px var(--sea); }
+.B .d.fri b { color: var(--sea); }
+.B .d.v { visibility: hidden; }
+.B .tip { margin: 16px 14px 0; padding: 14px 16px; background: var(--bg2); border-radius: 16px; }
+.B .tip b { font-family: "Aref Ruqaa", serif; font-size: 20px; }
+.B .tip p { font-size: 13px; color: var(--mute); }
+.B .tip .mini { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; color: var(--mute); text-align: center; }
+.B .tip .mini b { display: block; font-family: Almarai, sans-serif; font-size: 14px; color: var(--pearl); font-variant-numeric: tabular-nums; }
+
+/* =========================================================
+   C — الجدول: ورقة الحوزة المطبوعة: صفوف وخطوط وأرقام، سطر أسود للحزن وأخضر للفرح
+   ========================================================= */
+.C { --bg: #fbfbfa; --ink: #14171a; --mute: #6b7075; --rule: #d9dadc; --red: #a3162f; --joyb: #e3f2e7; --joy: #1b6b3a; --grief: #15171a;
+  background: var(--bg); color: var(--ink); font-family: Cairo, sans-serif; }
+.C .bar { border-top: 4px solid var(--red); padding: 10px 16px; display: flex; justify-content: space-between; font-size: 13px; color: var(--mute); }
+.C .bar b { color: var(--ink); font-weight: 800; font-size: 15px; }
+.C .date { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 4px 16px 12px; }
+.C .num { font-size: 92px; font-weight: 900; line-height: .95; color: var(--ink); font-variant-numeric: tabular-nums; }
+.C .dm { font-size: 20px; font-weight: 800; line-height: 1.3; }
+.C .dg { font-size: 13.5px; color: var(--mute); }
+.C .tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.C .tag { font-size: 11.5px; padding: 1px 8px; border: 1px solid var(--rule); border-radius: 3px; display: inline-flex; gap: 4px; align-items: center; }
+.C .tag.ok { color: var(--joy); border-color: var(--joy); }
+.C .tag svg { width: 10px; height: 10px; }
+.C .nxt { background: var(--ink); color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; }
+.C .nxt small { font-size: 12px; opacity: .7; display: block; }
+.C .nxt b { font-size: 22px; font-weight: 800; }
+.C .nxt .cd { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; direction: ltr; }
+.C .led { margin: 0; padding: 0 16px; }
+.C .led .r { display: flex; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 15.5px; }
+.C .led .r i { flex: 1; border-bottom: 1px dotted #b9bbbe; margin: 0 8px; transform: translateY(-4px); }
+.C .led .r b { font-variant-numeric: tabular-nums; font-weight: 800; }
+.C .led .r.pass { color: var(--mute); }
+.C .led .r.pass b { font-weight: 600; }
+.C .led .r.cur { color: var(--red); font-weight: 800; }
+.C h3 { font-size: 15px; font-weight: 800; margin: 18px 16px 6px; display: flex; justify-content: space-between; align-items: baseline; }
+.C h3 a { font-size: 13px; font-weight: 600; color: var(--red); text-decoration: none; }
+.C .ev { display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; align-items: center; padding: 9px 16px; border-bottom: 1px solid var(--rule); }
+.C .ev .dd { font-weight: 800; font-size: 15px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.C .ev .dd small { display: block; font-size: 11px; font-weight: 600; opacity: .75; }
+.C .ev .tt { font-size: 14px; font-weight: 700; line-height: 1.4; }
+.C .ev .w { font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.C .ev.joy { background: var(--joyb); color: #123d22; }
+.C .ev.grief { background: var(--grief); color: #fff; }
+.C .nav { background: var(--bg); border-top: 1px solid var(--rule); color: var(--mute); }
+.C .nav .on { color: var(--red); font-weight: 800; }
+.C .seg { display: grid; grid-template-columns: 1fr 1fr; margin: 4px 16px 8px; border: 1px solid var(--ink); border-radius: 4px; overflow: hidden; font-size: 13px; font-weight: 700; text-align: center; }
+.C .seg span { padding: 6px 0; }
+.C .seg .on { background: var(--ink); color: #fff; }
+.C .mh { display: flex; justify-content: space-between; align-items: baseline; padding: 0 16px 6px; }
+.C .mh b { font-size: 22px; font-weight: 900; }
+.C .mh small { color: var(--mute); font-size: 12.5px; }
+.C .th, .C .lr { display: grid; grid-template-columns: 30px 56px 1fr 1fr 1fr 18px; gap: 4px; padding: 6px 16px; align-items: center; font-variant-numeric: tabular-nums; }
+.C .th { position: sticky; top: 0; background: var(--bg); font-size: 11.5px; color: var(--mute); border-bottom: 2px solid var(--ink); z-index: 2; }
+.C .lr { font-size: 13px; border-bottom: 1px solid var(--rule); }
+.C .lr .d1 { font-weight: 900; font-size: 15px; }
+.C .lr .gw { font-size: 11px; color: var(--mute); line-height: 1.25; }
+.C .lr .gw b { color: var(--ink); font-size: 12.5px; }
+.C .lr.fri { background: #f1f1ef; }
+.C .lr.today { background: #fde8ec; }
+.C .lr.today .d1 { color: var(--red); }
+.C .lr .ck { color: var(--joy); width: 12px; height: 12px; }
+.C .oc2 { grid-column: 1 / -1; font-size: 12.5px; font-weight: 700; padding: 2px 0 0; }
+.C .lr.joy { background: var(--joyb); color: #123d22; }
+.C .lr.joy .gw, .C .lr.joy .gw b { color: #2c6a43; }
+.C .lr.grief { background: var(--grief); color: #fff; border-bottom-color: #000; }
+.C .lr.grief .gw, .C .lr.grief .gw b { color: #c9cdd2; }
+.C .lr.grief .ck { color: #fff; }
+</style>
+
+<div class="wrap">
+  <h1>ثلاثة اتجاهات لتصميم تقويم الهادي</h1>
+  <p class="lead">كل اتجاه له عالمه الخاص ويحل نفس المهمة: معرفة الصلاة القادمة، وتاريخ اليوم، والمناسبات الجاية. الشاشات أدناه ببيانات التطبيق الحقيقية ليوم الخميس ١٥ جمادى الآخرة ١٤٤٨، والساعة ٣:٥٠ عصراً. اضغط وحرّك داخل كل هاتف.</p>
+
+  <section class="sec" id="a">
+    <h2>كاشي</h2>
+    <p class="idea">من بلاط المقامات والقباب: لازورد وفيروز وذهب. الصفحة جدار بلاط، والتقويم نفسه جدار من البلاط بينها فواصل، وكل مناسبة نجمة ثمانية.</p>
+    <div class="meta">
+      <span class="sw" aria-label="الألوان"><i style="background:#14306b"></i><i style="background:#129c94"></i><i style="background:#c9a24a"></i><i style="background:#8c2a3b"></i><i style="background:#f2f6f6"></i></span>
+      <span>الخطوط: ريم كوفي للعناوين، تجوّل للنص</span>
+      <span>الجو: نهاري، فاتح، مزخرف</span>
+    </div>
+    <div class="frames" id="fa"></div>
+    <div class="pts">
+      <div><b>الأقوى فيه</b>هوية فورية تشبه الأضرحة والمقامات، وأوضح الاتجاهات بالألوان للمناسبات (فيروزي فرح، عنابي حزن، ذهبي عيد).</div>
+      <div><b>الحذر</b>أكثر الاتجاهات زخرفة. الزخرفة لازم تبقى هادئة حتى ما تضيع الأرقام، والوضع الداكن يحتاج لازورد ليلي مستقل.</div>
+    </div>
+  </section>
+
+  <section class="sec" id="b">
+    <h2>ليل الخليج</h2>
+    <p class="idea">التطبيق يتحرك مع القمر والشمس: سماء ليلية فوق ماء الخليج. الشاشة الرئيسية قوس اليوم يمشي من اليمين لليسار مثل اتجاه القراءة، وكل خانة في التقويم تحمل طور القمر الحقيقي لذلك اليوم الهجري.</p>
+    <div class="meta">
+      <span class="sw" aria-label="الألوان"><i style="background:#08202b"></i><i style="background:#135060"></i><i style="background:#ede9e0"></i><i style="background:#5cc8be"></i><i style="background:#e0586c"></i></span>
+      <span>الخطوط: عارف رقعة للعناوين، المراعي للنص</span>
+      <span>الجو: ليلي أساساً، مع نسخة نهارية</span>
+    </div>
+    <div class="frames" id="fb"></div>
+    <div class="pts">
+      <div><b>الأقوى فيه</b>فكرة مرتبطة بجوهر التقويم الهجري: يوم ١٥ بدر وأول الشهر هلال. أهدأ على العين وقت الفجر والعشاء.</div>
+      <div><b>الحذر</b>القوس تخطيطي: الفواصل بين الأوقات متساوية وليست بمقياس الزمن. وكل الخطوط والصور تحتاج تحميلاً محلياً حتى يشتغل بدون إنترنت.</div>
+    </div>
+  </section>
+
+  <section class="sec" id="c">
+    <h2>الجدول</h2>
+    <p class="idea">من الورقة المطبوعة المعلّقة في البيوت والحسينيات: صفوف وخطوط وأرقام. الشهر كله في جدول واحد بمواقيته، سطر أسود للحزن وأخضر للفرح، وأكبر رقم في الصفحة هو يوم اليوم.</p>
+    <div class="meta">
+      <span class="sw" aria-label="الألوان"><i style="background:#fbfbfa"></i><i style="background:#14171a"></i><i style="background:#a3162f"></i><i style="background:#e3f2e7"></i></span>
+      <span>الخط: القاهرة بأوزان متعددة</span>
+      <span>الجو: نهاري، مطبعي، أكثر الاتجاهات كثافة</span>
+    </div>
+    <div class="frames" id="fc"></div>
+    <div class="pts">
+      <div><b>الأقوى فيه</b>أسرع قراءة وأخف وزناً. يعرض الشهر كاملاً بمواقيته في شاشة واحدة، وأمام الناس نفس لغة الجدول الورقي المعتاد.</div>
+      <div><b>الحذر</b>أقل زينة وأبرد شعوراً، وأعتمد فيه على الدقة في الخطوط والمسافات. والسطر الأسود يحتاج انتباهاً في الوضع الداكن.</div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>المقارنة</h2>
+    <div class="tw">
+      <table class="cmp">
+        <thead><tr><th></th><th>كاشي</th><th>ليل الخليج</th><th>الجدول</th></tr></thead>
+        <tbody>
+          <tr><th>أنسب لمن</th><td>يريد تطبيقاً بهوية دينية واضحة</td><td>يفتحه فجراً وليلاً، ويحب الأجواء</td><td>يريد المعلومة بسرعة وبكثافة</td></tr>
+          <tr><th>الشاشة الرئيسية</th><td>رأس لازوردي وشريط بلاط للأوقات</td><td>قوس الشمس مع عدّاد الصلاة</td><td>الرقم الكبير وجدول الأوقات</td></tr>
+          <tr><th>التقويم</th><td>جدار بلاط</td><td>أطوار القمر</td><td>جدول الشهر الكامل</td></tr>
+          <tr><th>الوضع الداكن</th><td>لازورد ليلي، يحتاج تصميماً</td><td>الأساس</td><td>معكوس بسيط</td></tr>
+          <tr><th>جهد البناء</th><td>متوسط</td><td>الأعلى (القوس والأطوار)</td><td>الأقل</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead" style="margin-top:18px">اختر واحداً، أو قل لي «شكل من هذا وروح من ذاك» وأمزجهما. والمناسبات والإعدادات تتبع الاتجاه نفسه بعد الاختيار.</p>
+  </section>
+</div>
+
+<script>
+const AR = '٠١٢٣٤٥٦٧٨٩';
+const ar = n => String(n).replace(/\d/g, d => AR[d]);
+const GM = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const DOW3 = ['سبت','أحد','اثن','ثلا','أرب','خمس','جمع'];
+const WD = ['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+const G0 = Date.UTC(2026, 10, 12);                       // ١ جمادى الآخرة = ١٢ نوفمبر
+const greg = d => { const t = new Date(G0 + (d - 1) * 864e5); return { d: t.getUTCDate(), m: t.getUTCMonth() }; };
+const LEN = 29, TODAY = 15;
+const SALIH = [1,2,4,6,7,8,9,10,11,14,15,17,18,19,20,22,23];
+const EV = { 3: { t: 'grief', n: 'استشهاد السيدة فاطمة الزهراء (ع) — الرواية الثانية' }, 20: { t: 'joy', n: 'ولادة السيدة فاطمة الزهراء (ع)' } };
+const TIMES = [['الفجر','٤:٥٠','ص'],['الشروق','٦:٠٤','ص'],['الظهر','١١:٢٥','ص'],['الغروب','٤:٤٥','م'],['المغرب','٥:٠١','م'],['منتصف الليل','١١:٢٥','م']];
+const NOW_IDX = 2;                                        // الفترة الحالية: الظهر
+const UP = [
+  { d: 20, mo: 'جمادى الآخرة', t: 'joy',   n: 'ولادة السيدة فاطمة الزهراء (ع)', g: 'الثلاثاء ١ ديسمبر', w: 'بعد ٦ أيام' },
+  { d: 1,  mo: 'رجب',          t: 'joy',   n: 'ولادة الإمام محمد الباقر (ع)',  g: 'الجمعة ١١ ديسمبر',  w: 'بعد ١٥ يوماً' },
+  { d: 3,  mo: 'رجب',          t: 'grief', n: 'استشهاد الإمام علي الهادي (ع)', g: 'الأحد ١٣ ديسمبر',   w: 'بعد ١٧ يوماً' },
+  { d: 10, mo: 'رجب',          t: 'joy',   n: 'ولادة الإمام محمد الجواد (ع)',  g: 'الأحد ٢٠ ديسمبر',   w: 'بعد ٢٤ يوماً' }
+];
+// أوقات الحوزة الحقيقية لجمادى الآخرة ١٤٤٨ (الفجر، الظهر، العشاءين)
+const HZ = `4:41 11:22 5:04|4:42 11:22 5:04|4:42 11:22 5:04|4:43 11:22 5:03|4:44 11:22 5:03|4:44 11:22 5:02|4:45 11:23 5:02|4:46 11:23 5:02|4:46 11:24 5:02|4:47 11:23 5:01|4:47 11:24 5:01|4:48 11:24 5:01|4:49 11:24 5:01|4:49 11:24 5:01|4:50 11:25 5:00|4:51 11:25 5:00|4:51 11:25 5:00|4:52 11:26 5:00|4:53 11:26 5:00|4:53 11:27 5:00|4:54 11:27 5:00|4:55 11:28 5:00|4:55 11:28 5:00|4:56 11:28 5:00|4:56 11:29 5:01|4:57 11:29 5:01|4:58 11:29 5:01|4:58 11:30 5:01|4:59 11:30 5:01`.split('|').map(s => s.split(' ').map(x => ar(x)));
+
+const ICON = {
+  home: '<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  cal: '<path d="M7 2v3M17 2v3M3 9h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>',
+  star: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
+  set: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/>'
+};
+const nav = on => ['home:الرئيسية','cal:التقويم','star:المناسبات','set:الإعدادات'].map(s => {
+  const [k, l] = s.split(':'); const active = (on === k);
+  return `<button class="${active ? 'on' : ''}" tabindex="-1"><svg viewBox="0 0 24 24">${ICON[k]}</svg><span>${l}</span></button>`;
+}).join('');
+const check = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.6 2.6L10 3.4"/></svg>';
+const frame = (cls, html, navOn, cap) => `<div class="phone"><div class="screen ${cls}"><div class="scroll">${html}</div><nav class="nav">${nav(navOn)}</nav></div><p class="cap">${cap}</p></div>`;
+
+/* ---------- نجمة ثمانية ---------- */
+function star(R, r, n = 8) {
+  let p = '';
+  for (let i = 0; i < n * 2; i++) {
+    const a = Math.PI * i / n - Math.PI / 2, rad = i % 2 ? r : R;
+    p += (i ? 'L' : 'M') + (Math.cos(a) * rad).toFixed(2) + ',' + (Math.sin(a) * rad).toFixed(2);
+  }
+  return p + 'Z';
+}
+const starSvg = (fill) => `<svg viewBox="-12 -12 24 24"><path d="${star(11.5, 7.2)}" fill="${fill}"/></svg>`;
+
+/* ---------- القمر ---------- */
+function moon(d, lit, dark, size) {
+  const p = (d - 0.5) / 29.53, k = Math.cos(2 * Math.PI * p), r = 10, rx = Math.abs(k) * r;
+  const path = `M0,${-r} A${r},${r} 0 0 1 0,${r} A${rx.toFixed(2)},${r} 0 0 ${k >= 0 ? 0 : 1} 0,${-r}Z`;
+  return `<svg viewBox="-11 -11 22 22" ${size ? `width="${size}" height="${size}"` : ''}><circle r="10" fill="${dark}"/><path transform="${p < 0.5 ? '' : 'scale(-1,1)'}" d="${path}" fill="${lit}"/></svg>`;
+}
+
+/* =================== A — كاشي =================== */
+const A_COL = { joy: '#129c94', grief: '#8c2a3b', eid: '#c9a24a' };
+function aHome() {
+  const frieze = TIMES.map((t, i) => `<div class="tile ${i === NOW_IDX ? 'cur' : i < NOW_IDX ? 'pass' : ''}"><span>${t[0].replace('منتصف الليل', 'الليل')}</span><b>${t[1]}</b><small>${t[2]}</small></div>`).join('');
+  const ups = UP.map(u => `<div class="row"><div class="starb">${starSvg(A_COL[u.t])}<span>${ar(u.d)}</span></div><div><div class="t">${u.n}</div><div class="s">${u.mo} · ${u.g}</div></div><div class="w">${u.w}</div></div>`).join('');
+  return `<div class="hero">
+    <div class="top"><b>تقويم الهادي</b><span>المنامة</span></div>
+    <div class="wd">الخميس</div><div class="hd">١٥ جمادى الآخرة ١٤٤٨هـ</div><div class="gd">٢٦ نوفمبر ٢٠٢٦م</div>
+    <div class="rule"></div>
+    <div class="next"><div><small>الصلاة القادمة</small><b>الغروب</b></div><div class="cd">١:١٠:٠٠</div></div>
+  </div>
+  <div class="frieze">${frieze}</div>
+  <h3>المناسبات القادمة</h3>${ups}
+  <h3>أعمال اليوم</h3>
+  <div class="deed"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="#129c94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l2.6 2.6L10 3.4"/></svg>من الأيام الصالحة حسب تقويم الحوزة</div>
+  <div class="deed"><svg width="14" height="14" viewBox="-12 -12 24 24"><path d="${star(11.5,7.2)}" fill="#c9a24a"/></svg>مساء اليوم ليلة الجمعة: دعاء كميل</div>`;
+}
+function aCal() {
+  const lead = 5;                                              // الخميس
+  let cells = DOW3.map(w => `<div class="dow">${w}</div>`).join('');
+  for (let i = 0; i < lead; i++) cells += '<div class="c v"></div>';
+  for (let d = 1; d <= LEN; d++) {
+    const g = greg(d), e = EV[d], col = (d - 1 + lead) % 7;
+    cells += `<div class="c ${col === 6 ? 'fri' : ''} ${d === TODAY ? 'today sel' : ''}"><b>${ar(d)}</b><small>${ar(g.d)}</small>${SALIH.includes(d) ? `<span class="ck">${check}</span>` : ''}${e ? `<span class="st">${starSvg(A_COL[e.t])}</span>` : ''}</div>`;
+  }
+  return `<div class="cal-h"><div class="navb"><i>›</i><span style="font-size:13px">نوفمبر – ديسمبر ٢٠٢٦</span><i>‹</i></div>
+    <div class="arch"><svg viewBox="0 0 250 92" preserveAspectRatio="none"><path d="M0,92 L0,52 Q0,18 125,0 Q250,18 250,52 L250,92Z" fill="#f2f6f6" stroke="#c9a24a" stroke-width="2"/></svg><div><b>جمادى الآخرة ١٤٤٨هـ</b><small>٢٩ يوماً</small></div></div></div>
+    <div class="wall">${cells}</div>
+    <div class="legend"><span>${starSvg('#129c94').replace('<svg', '<svg width="12" height="12"')}فرح</span><span>${starSvg('#8c2a3b').replace('<svg', '<svg width="12" height="12"')}حزن</span><span>${starSvg('#c9a24a').replace('<svg', '<svg width="12" height="12"')}عيد</span><span style="color:#129c94">${check.replace('<svg', '<svg width="11" height="11"')}</span><span>يوم صالح</span></div>
+    <div class="det"><b>الخميس ١٥ جمادى الآخرة ١٤٤٨هـ</b><p>٢٦ نوفمبر ٢٠٢٦م · من الأيام الصالحة · لا مناسبة مسجّلة</p></div>`;
+}
+
+/* =================== B — ليل الخليج =================== */
+function bArc() {
+  // ست نقاط متساوية الأبعاد (تخطيطي): الفجر، الشروق، الظهر، الغروب، المغرب، منتصف الليل — من اليمين لليسار
+  const X = i => 330 - i * 60, H = 118;
+  let path = '';
+  for (let s = 0; s <= 40; s++) { const u = s / 40, x = 270 - 120 * u, y = H - 78 * Math.sin(Math.PI * u); path += (s ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1); }
+  const u = 0.5 + 0.5 * 0.78, sx = 270 - 120 * u, sy = H - 78 * Math.sin(Math.PI * u);
+  const done = (() => { let p = ''; for (let s = 0; s <= 40; s++) { const uu = (u * s) / 40, x = 270 - 120 * uu, y = H - 78 * Math.sin(Math.PI * uu); p += (s ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1); } return p; })();
+  const ticks = TIMES.map((t, i) => `<line x1="${X(i)}" y1="${H}" x2="${X(i)}" y2="${H + 6}" stroke="${i === NOW_IDX ? '#5cc8be' : '#8fb0b8'}" stroke-width="1.5"/><text x="${X(i)}" y="${H + 20}" class="${i === NOW_IDX ? 't' : ''}">${t[0].replace('منتصف الليل', 'الليل')}</text><text x="${X(i)}" y="${H + 33}" class="t">${t[1]}</text>`).join('');
+  return `<svg class="arc" viewBox="0 0 360 160" width="100%" role="img" aria-label="قوس الشمس من الشروق إلى الغروب">
+    <line x1="14" y1="${H}" x2="346" y2="${H}" stroke="#8fb0b8" stroke-opacity=".45" stroke-width="1"/>
+    <path d="${path}" fill="none" stroke="#8fb0b8" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <path d="${done}" fill="none" stroke="#e2be6a" stroke-width="2.4" stroke-linecap="round"/>
+    ${ticks}
+    <circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="13" fill="#e2be6a" fill-opacity=".18"/><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="6.5" fill="#e2be6a"/>
+    <g transform="translate(${X(5)},${H - 22})">${moon(TODAY, '#ede9e0', '#0b2a36', 22).replace('<svg ', '<svg x="-11" y="-11" ')}</g>
+  </svg>`;
+}
+function bHome() {
+  const pl = TIMES.map((t, i) => `<div class="r ${i === NOW_IDX ? 'cur' : i < NOW_IDX ? 'pass' : ''}"><span>${t[0]}</span><b>${t[1]} ${t[2]}</b></div>`).join('');
+  const oc = UP.map(u => `<div class="oc ${u.t}"><div style="flex:none">${moon(u.d + (u.mo === 'رجب' ? 0 : 0), u.t === 'grief' ? '#e0586c' : '#ede9e0', '#16414e', 30)}</div><div><div class="t">${u.n}</div><div class="s">${ar(u.d)} ${u.mo} · ${u.g}</div></div><div class="w">${u.w}</div></div>`).join('');
+  return `<div class="sky"><div class="top"><span>تقويم الهادي</span><span>المنامة</span></div>
+    <div class="hd">١٥ جمادى الآخرة</div><div class="sub">الخميس · ١٤٤٨هـ · ٢٦ نوفمبر ٢٠٢٦م · ليلة البدر</div>
+    ${bArc()}
+    <div class="nextline">الغروب بعد <b>١:١٠:٠٠</b></div></div>
+    <div class="pl">${pl}</div>
+    <h3>المناسبات القادمة</h3>${oc}`;
+}
+function bCal() {
+  const lead = 5;
+  let g = DOW3.map(w => `<div class="dow">${w}</div>`).join('');
+  for (let i = 0; i < lead; i++) g += '<div class="d v"></div>';
+  for (let d = 1; d <= LEN; d++) {
+    const e = EV[d], col = (d - 1 + lead) % 7, today = d === TODAY;
+    g += `<div class="d ${col === 6 ? 'fri' : ''} ${today ? 'today' : ''}"><b>${ar(d)}</b>${moon(d, '#ede9e0', '#16414e')}${SALIH.includes(d) ? `<span class="ck">${check}</span>` : ''}${e ? `<span class="dot" style="background:${e.t === 'grief' ? '#e0586c' : '#5cc8be'}"></span>` : ''}</div>`;
+  }
+  return `<div class="cal-top"><i>›</i><div style="text-align:center"><b>جمادى الآخرة</b><small>١٤٤٨هـ · نوفمبر – ديسمبر ٢٠٢٦</small></div><i>‹</i></div>
+    <div class="g">${g}</div>
+    <div class="tip"><b>١٥ جمادى الآخرة — البدر</b><p>الخميس ٢٦ نوفمبر · من الأيام الصالحة · من الأيام البيض</p>
+      <div class="mini"><span>الفجر<b>٤:٥٠</b></span><span>الظهر<b>١١:٢٥</b></span><span>المغرب<b>٥:٠١</b></span><span>الليل<b>١١:٢٥</b></span></div></div>`;
+}
+
+/* =================== C — الجدول =================== */
+function cHome() {
+  const led = TIMES.map((t, i) => `<div class="r ${i === NOW_IDX ? 'cur' : i < NOW_IDX ? 'pass' : ''}"><span>${t[0]}${i === NOW_IDX ? ' · الآن' : ''}</span><i></i><b>${t[1]} ${t[2]}</b></div>`).join('');
+  const ev = UP.map(u => `<div class="ev ${u.t}"><div class="dd">${ar(u.d)}<small>${u.mo}</small></div><div><div class="tt">${u.n}</div><div style="font-size:12px;opacity:.75">${u.g}</div></div><div class="w">${u.w}</div></div>`).join('');
+  return `<div class="bar"><b>تقويم الهادي</b><span>المنامة · حوزة الهدى</span></div>
+    <div class="date"><div class="num">١٥</div><div><div class="dm">جمادى الآخرة ١٤٤٨هـ</div><div class="dg">الخميس ٢٦ نوفمبر ٢٠٢٦م</div>
+      <div class="tags"><span class="tag ok">${check}يوم صالح</span><span class="tag">ليلة الجمعة مساءً</span></div></div></div>
+    <div class="nxt"><div><small>الصلاة القادمة</small><b>الغروب ٤:٤٥ م</b></div><div class="cd">١:١٠:٠٠</div></div>
+    <div class="led">${led}</div>
+    <h3>المناسبات القادمة <a>عرض الكل</a></h3>${ev}`;
+}
+function cCal() {
+  const lead = 5; let rows = '';
+  for (let d = 1; d <= LEN; d++) {
+    const g = greg(d), e = EV[d], col = (d - 1 + lead) % 7, wd = WD[col];
+    const cls = e ? e.t : (d === TODAY ? 'today' : col === 6 ? 'fri' : '');
+    rows += `<div class="lr ${cls}"><b class="d1">${ar(d)}</b><span class="gw"><b>${wd}</b><br>${ar(g.d)} ${GM[g.m]}</span><span>${HZ[d - 1][0]}</span><span>${HZ[d - 1][1]}</span><span>${HZ[d - 1][2]}</span><span>${SALIH.includes(d) ? check.replace('<svg', '<svg class="ck"') : ''}</span>${e ? `<div class="oc2">${e.n}</div>` : ''}${d === TODAY ? '<div class="oc2" style="color:#a3162f">اليوم</div>' : ''}</div>`;
+  }
+  return `<div class="bar"><b>التقويم</b><span>المنامة · حوزة الهدى</span></div>
+    <div class="seg"><span class="on">جدول</span><span>شبكة</span></div>
+    <div class="mh"><b>جمادى الآخرة ١٤٤٨هـ</b><small>نوفمبر – ديسمبر ٢٠٢٦</small></div>
+    <div class="th"><span>يوم</span><span>التاريخ</span><span>الفجر</span><span>الظهر</span><span>المغرب</span><span></span></div>${rows}`;
+}
+
+document.getElementById('fa').innerHTML = frame('A', aHome(), 'home', 'الرئيسية') + frame('A', aCal(), 'cal', 'التقويم');
+document.getElementById('fb').innerHTML = frame('B', bHome(), 'home', 'الرئيسية') + frame('B', bCal(), 'cal', 'التقويم');
+document.getElementById('fc').innerHTML = frame('C', cHome(), 'home', 'الرئيسية') + frame('C', cCal(), 'cal', 'التقويم: الشهر كله بمواقيته');
+</script>
